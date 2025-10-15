@@ -1,22 +1,169 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# ZenHub – Notes, Focus & Fun
 
-# Getting Started
+A React Native all-in-one utility & fun hub app featuring notes, Pomodoro timer, quotes, weather, wallpapers, news, dictionary, and math game modules.
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+## ✨ Features
 
-## Step 1: Start Metro
+### Core Modules
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+- 🗒️ **Notes & To-Do** - CRUD operations with offline storage, tags, search, and export
+- ⏱️ **Pomodoro Timer** - Customizable work/break intervals with notifications
+- 💬 **Quotes** - Daily inspirational quotes (Coming Soon)
+- ☀️ **Weather** - Current conditions and forecasts (Coming Soon)
+- 🖼️ **Wallpapers** - Browse and download beautiful images (Coming Soon)
+- 📰 **News** - Latest articles by category (Coming Soon)
+- 📚 **Dictionary** - Word definitions and favorites (Coming Soon)
+- 🧮 **Math Game** - Progressive difficulty brain training (Coming Soon)
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+### Design & UX
 
-```sh
-# Using npm
-npm start
+- 🎨 Warm brown/beige color palette
+- 📱 Soft rounded cards (18-20px radius)
+- ✨ Smooth 60fps animations
+- 📱 Offline-first functionality
+- 🎯 Clean, modern UI with Tailwind CSS
 
-# OR using Yarn
-yarn start
+### Monetization
+
+- 📺 Banner ads (non-intrusive)
+- 🚫 Interstitial ads (with cooldown)
+- 🎁 Optional rewarded ads
+- 💳 In-app purchase to remove ads
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Node.js >= 20.19.4
+- React Native development environment
+- Android Studio / Xcode
+
+### Installation
+
+1. **Clone the repository**
+
+   ```bash
+   git clone https://github.com/your-username/ZenHub.git
+   cd ZenHub
+   ```
+
+2. **Install dependencies**
+
+   ```bash
+   npm install
+   ```
+
+3. **Configure environment variables**
+
+   Edit `src/config/env.js` and replace placeholder API keys:
+
+   ```javascript
+   // API Keys (replace with your actual keys)
+   WEATHER_API_KEY: 'your_openweather_api_key',
+   NEWS_API_KEY: 'your_news_api_key',
+   WALLPAPER_API_KEY: 'your_unsplash_access_key',
+
+   // AdMob IDs (replace with your production ad unit IDs)
+   ADMOB_BANNER_ANDROID: 'your_banner_ad_unit_id',
+   ADMOB_BANNER_IOS: 'your_banner_ad_unit_id',
+   // ... more ad unit IDs
+   ```
+
+4. **iOS setup** (iOS only)
+   ```bash
+   cd ios && pod install && cd ..
+   ```
+
+### Running the App
+
+#### Android
+
+```bash
+npm run android
 ```
+
+#### iOS
+
+```bash
+npm run ios
+```
+
+#### Development Server
+
+```bash
+npm start
+```
+
+## 🏗️ Project Structure
+
+```
+src/
+├── components/          # Reusable UI components
+│   └── UI.jsx          # Common components (Card, Button, Badge, etc.)
+├── config/             # Configuration files
+│   ├── env.js          # Environment variables & API keys
+│   ├── theme.js        # Theme configuration
+│   └── constants.js    # App constants
+├── navigation/         # Navigation setup
+│   └── AppNavigator.jsx
+├── screens/            # App screens
+│   ├── HomeScreen.jsx
+│   ├── NotesScreen.jsx
+│   ├── NoteDetailScreen.jsx
+│   ├── PomodoroScreen.jsx
+│   └── ...
+├── services/           # Business logic & API calls
+│   ├── storageService.js
+│   ├── notesService.js
+│   └── adsService.js
+├── utils/             # Helper functions
+│   └── helpers.js
+└── hooks/             # Custom React hooks
+```
+
+## 🔧 Configuration
+
+### API Keys Required
+
+1. **OpenWeatherMap** (Weather module)
+
+   - Sign up at https://openweathermap.org/api
+   - Get your free API key
+   - Add to `env.js` as `WEATHER_API_KEY`
+
+2. **News API** (News module)
+
+   - Sign up at https://newsapi.org
+   - Get your free API key
+   - Add to `env.js` as `NEWS_API_KEY`
+
+3. **Unsplash** (Wallpapers module)
+   - Sign up at https://unsplash.com/developers
+   - Create an app and get access key
+   - Add to `env.js` as `WALLPAPER_API_KEY`
+
+### AdMob Setup
+
+1. **Create AdMob account** at https://admob.google.com
+2. **Create ad units** for your app
+3. **Replace test ad unit IDs** in `env.js` with your production IDs
+4. **For development**, current test IDs will work fine
+
+## 📋 Features Status
+
+- ✅ **Home Module** - Complete
+- ✅ **Notes & To-Do** - Complete with CRUD, tags, search
+- ✅ **Pomodoro Timer** - Complete with customizable intervals
+- 🚧 **Quotes** - API integration pending
+- 🚧 **Weather** - API integration pending
+- 🚧 **Wallpapers** - API integration pending
+- 🚧 **News** - API integration pending
+- 🚧 **Dictionary** - API integration pending
+- 🚧 **Math Game** - Game logic pending
+
+---
+
+**Made with ❤️ using React Native & Tailwind CSS**
 
 ## Step 2: Build and run your app
 
