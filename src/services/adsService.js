@@ -1,4 +1,5 @@
 import { Platform } from 'react-native';
+import React from 'react';
 import {
   BannerAd,
   BannerAdSize,
@@ -7,172 +8,255 @@ import {
   AdEventType,
   RewardedAd,
   RewardedAdEventType,
+  MobileAds,
 } from 'react-native-google-mobile-ads';
 import env from '../config/env';
 import { STORAGE_KEYS } from '../config/constants';
-import StorageService from './storageService';
+import { getItem, setItem } from './storageService';
 
-class AdsService {
-  constructor() {
-    this.interstitialAd = null;
-    this.rewardedAd = null;
-    this.lastInterstitialTime = 0;
-    this.isAdLoaded = false;
-    this.initializeAds();
+// State management
+let isInitialized = false;
+let interstitialAd = null;
+let rewardedAd = null;
+let lastInterstitialTime = 0;
+let isAdLoaded = false;
+
+/**
+ * Initialize Google Mobile Ads SDK
+ */
+export const initializeAds = async () => {
+  try {
+    await MobileAds().initialize();
+    isInitialized = true;
+    console.log('Google Mobile Ads SDK initialized successfully');
+
+    // Load ads after initialization
+    loadInterstitialAd();
+    loadRewardedAd();
+    await loadLastInterstitialTime();
+
+    return true;
+  } catch (error) {
+    console.log('Failed to initialize Google Mobile Ads SDK:', error);
+    return false;
+  }
+};
+
+/**
+ * Load last interstitial time from storage
+ */
+export const loadLastInterstitialTime = async () => {
+  try {
+    lastInterstitialTime = await getItem(STORAGE_KEYS.LAST_INTERSTITIAL, 0);
+  } catch (error) {
+    console.log('Error loading last interstitial time:', error);
+    lastInterstitialTime = 0;
+  }
+};
+
+/**
+ * Save last interstitial time to storage
+ */
+export const saveLastInterstitialTime = async () => {
+  try {
+    lastInterstitialTime = Date.now();
+    await setItem(STORAGE_KEYS.LAST_INTERSTITIAL, lastInterstitialTime);
+  } catch (error) {
+    console.log('Error saving last interstitial time:', error);
+  }
+};
+
+/**
+ * Get Banner Ad Unit ID
+ */
+export const getBannerAdUnitId = () => {
+  if (__DEV__) {
+    return TestIds.BANNER;
+  }
+  return Platform.OS === 'ios'
+    ? env.ADMOB_BANNER_IOS
+    : env.ADMOB_BANNER_ANDROID;
+};
+
+/**
+ * Get Interstitial Ad Unit ID
+ */
+export const getInterstitialAdUnitId = () => {
+  if (__DEV__) {
+    return TestIds.INTERSTITIAL;
+  }
+  return Platform.OS === 'ios'
+    ? env.ADMOB_INTERSTITIAL_IOS
+    : env.ADMOB_INTERSTITIAL_ANDROID;
+};
+
+/**
+ * Get Rewarded Ad Unit ID
+ */
+export const getRewardedAdUnitId = () => {
+  if (__DEV__) {
+    return TestIds.REWARDED;
+  }
+  return Platform.OS === 'ios'
+    ? env.ADMOB_REWARDED_IOS
+    : env.ADMOB_REWARDED_ANDROID;
+};
+
+/**
+ * Load Interstitial Ad
+ */
+export const loadInterstitialAd = () => {
+  if (!isInitialized) {
+    console.log('Google Mobile Ads SDK not initialized yet');
+    return;
   }
 
-  initializeAds() {
-    this.loadInterstitialAd();
-    this.loadRewardedAd();
-    this.loadLastInterstitialTime();
-  }
-
-  async loadLastInterstitialTime() {
-    this.lastInterstitialTime = await StorageService.getItem(
-      STORAGE_KEYS.LAST_INTERSTITIAL,
-      0,
+  try {
+    interstitialAd = InterstitialAd.createForAdUnitId(
+      getInterstitialAdUnitId(),
     );
-  }
 
-  async saveLastInterstitialTime() {
-    this.lastInterstitialTime = Date.now();
-    await StorageService.setItem(
-      STORAGE_KEYS.LAST_INTERSTITIAL,
-      this.lastInterstitialTime,
-    );
-  }
-
-  getBannerAdUnitId() {
-    if (__DEV__) {
-      return TestIds.BANNER;
-    }
-    return Platform.OS === 'ios'
-      ? env.ADMOB_BANNER_IOS
-      : env.ADMOB_BANNER_ANDROID;
-  }
-
-  getInterstitialAdUnitId() {
-    if (__DEV__) {
-      return TestIds.INTERSTITIAL;
-    }
-    return Platform.OS === 'ios'
-      ? env.ADMOB_INTERSTITIAL_IOS
-      : env.ADMOB_INTERSTITIAL_ANDROID;
-  }
-
-  getRewardedAdUnitId() {
-    if (__DEV__) {
-      return TestIds.REWARDED;
-    }
-    return Platform.OS === 'ios'
-      ? env.ADMOB_REWARDED_IOS
-      : env.ADMOB_REWARDED_ANDROID;
-  }
-
-  loadInterstitialAd() {
-    this.interstitialAd = InterstitialAd.createForAdUnitId(
-      this.getInterstitialAdUnitId(),
-    );
-
-    this.interstitialAd.addAdEventListener(AdEventType.LOADED, () => {
-      this.isAdLoaded = true;
+    interstitialAd.addAdEventListener(AdEventType.LOADED, () => {
+      isAdLoaded = true;
+      console.log('Interstitial ad loaded successfully');
     });
 
-    this.interstitialAd.addAdEventListener(AdEventType.CLOSED, () => {
-      this.isAdLoaded = false;
-      this.saveLastInterstitialTime();
+    interstitialAd.addAdEventListener(AdEventType.CLOSED, () => {
+      isAdLoaded = false;
+      saveLastInterstitialTime();
       // Preload next ad
       setTimeout(() => {
-        this.loadInterstitialAd();
+        loadInterstitialAd();
       }, 1000);
     });
 
-    this.interstitialAd.addAdEventListener(AdEventType.ERROR, error => {
+    interstitialAd.addAdEventListener(AdEventType.ERROR, error => {
       console.log('Interstitial ad error:', error);
-      this.isAdLoaded = false;
+      isAdLoaded = false;
       // Retry loading after delay
       setTimeout(() => {
-        this.loadInterstitialAd();
+        loadInterstitialAd();
       }, 5000);
     });
 
-    this.interstitialAd.load();
+    interstitialAd.load();
+  } catch (error) {
+    console.log('Error creating InterstitialAd:', error);
+  }
+};
+
+/**
+ * Load Rewarded Ad
+ */
+export const loadRewardedAd = () => {
+  if (!isInitialized) {
+    console.log('Google Mobile Ads SDK not initialized yet');
+    return;
   }
 
-  loadRewardedAd() {
-    this.rewardedAd = RewardedAd.createForAdUnitId(this.getRewardedAdUnitId());
+  try {
+    rewardedAd = RewardedAd.createForAdUnitId(getRewardedAdUnitId());
 
-    this.rewardedAd.addAdEventListener(RewardedAdEventType.LOADED, () => {
+    rewardedAd.addAdEventListener(RewardedAdEventType.LOADED, () => {
       console.log('Rewarded ad loaded');
     });
 
-    this.rewardedAd.addAdEventListener(
-      RewardedAdEventType.EARNED_REWARD,
-      reward => {
-        console.log('Rewarded ad earned reward:', reward);
-      },
-    );
+    rewardedAd.addAdEventListener(RewardedAdEventType.EARNED_REWARD, reward => {
+      console.log('Rewarded ad earned reward:', reward);
+    });
 
-    this.rewardedAd.addAdEventListener(AdEventType.CLOSED, () => {
+    rewardedAd.addAdEventListener(AdEventType.CLOSED, () => {
       // Preload next ad
       setTimeout(() => {
-        this.loadRewardedAd();
+        loadRewardedAd();
       }, 1000);
     });
 
-    this.rewardedAd.load();
+    rewardedAd.load();
+  } catch (error) {
+    console.log('Error creating RewardedAd:', error);
   }
+};
 
-  canShowInterstitial() {
-    if (!env.ENABLE_ADS) return false;
+/**
+ * Check if can show interstitial ad
+ */
+export const canShowInterstitial = () => {
+  if (!env.ENABLE_ADS) return false;
 
-    const now = Date.now();
-    const timeSinceLastAd = now - this.lastInterstitialTime;
+  const now = Date.now();
+  const timeSinceLastAd = now - lastInterstitialTime;
 
-    return this.isAdLoaded && timeSinceLastAd >= env.INTERSTITIAL_COOLDOWN;
-  }
+  return isAdLoaded && timeSinceLastAd >= env.INTERSTITIAL_COOLDOWN;
+};
 
-  async showInterstitial() {
-    if (this.canShowInterstitial()) {
-      try {
-        await this.interstitialAd.show();
-        return true;
-      } catch (error) {
-        console.log('Error showing interstitial ad:', error);
-        return false;
-      }
+/**
+ * Show Interstitial Ad
+ */
+export const showInterstitial = async () => {
+  if (canShowInterstitial()) {
+    try {
+      await interstitialAd.show();
+      return true;
+    } catch (error) {
+      console.log('Error showing interstitial ad:', error);
+      return false;
     }
-    return false;
   }
+  return false;
+};
 
-  async showRewardedAd() {
-    if (this.rewardedAd) {
-      try {
-        await this.rewardedAd.show();
-        return true;
-      } catch (error) {
-        console.log('Error showing rewarded ad:', error);
-        return false;
-      }
+/**
+ * Show Rewarded Ad
+ */
+export const showRewardedAd = async () => {
+  if (rewardedAd) {
+    try {
+      await rewardedAd.show();
+      return true;
+    } catch (error) {
+      console.log('Error showing rewarded ad:', error);
+      return false;
     }
-    return false;
   }
+  return false;
+};
 
-  createBannerAd(className = '') {
-    if (!env.ENABLE_ADS) return null;
+/**
+ * Create Banner Ad Component
+ */
+export const createBannerAd = (className = '') => {
+  if (!env.ENABLE_ADS) return null;
 
-    return (
-      <BannerAd
-        unitId={this.getBannerAdUnitId()}
-        size={BannerAdSize.BANNER}
-        requestOptions={{
-          requestNonPersonalizedAdsOnly: true,
-        }}
-        className={className}
-      />
-    );
-  }
-}
+  return (
+    <BannerAd
+      unitId={getBannerAdUnitId()}
+      size={BannerAdSize.BANNER}
+      requestOptions={{
+        requestNonPersonalizedAdsOnly: true,
+      }}
+      className={className}
+    />
+  );
+};
 
-const adsService = new AdsService();
+/**
+ * Initialize ads service when module loads
+ */
+initializeAds();
+
+// Default export for backward compatibility
+const adsService = {
+  initializeAds,
+  loadInterstitialAd,
+  loadRewardedAd,
+  canShowInterstitial,
+  showInterstitial,
+  showRewardedAd,
+  createBannerAd,
+  getBannerAdUnitId,
+  getInterstitialAdUnitId,
+  getRewardedAdUnitId,
+};
+
 export default adsService;
