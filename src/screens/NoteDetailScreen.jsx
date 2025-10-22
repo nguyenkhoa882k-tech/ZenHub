@@ -13,7 +13,7 @@ import {
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Icon from '@react-native-vector-icons/ionicons';
 import { Card, CardContent, Button, Badge } from '../components/UI';
-import NotesService from '../services/notesService';
+import * as notesService from '../services/notes/notesService';
 import { formatDate } from '../utils/helpers';
 
 const NoteDetailScreen = () => {
@@ -36,7 +36,7 @@ const NoteDetailScreen = () => {
   const loadNote = useCallback(async () => {
     try {
       setIsLoading(true);
-      const noteData = await NotesService.getNoteById(noteId);
+      const noteData = await notesService.getNoteById(noteId);
       if (noteData) {
         setNote(noteData);
       }
@@ -64,9 +64,9 @@ const NoteDetailScreen = () => {
       setIsLoading(true);
 
       if (mode === 'create') {
-        await NotesService.createNote(note);
+        await notesService.createNote(note);
       } else {
-        await NotesService.updateNote(noteId, note);
+        await notesService.updateNote(noteId, note);
       }
 
       navigation.goBack();
@@ -98,7 +98,7 @@ const NoteDetailScreen = () => {
   const handleAddChecklistItem = async () => {
     if (newChecklistItem.trim()) {
       if (mode === 'edit' && noteId) {
-        await NotesService.addChecklistItem(noteId, newChecklistItem.trim());
+        await notesService.addChecklistItem(noteId, newChecklistItem.trim());
         loadNote();
       } else {
         // For new notes, add to local state
@@ -120,7 +120,7 @@ const NoteDetailScreen = () => {
 
   const handleToggleChecklistItem = async itemId => {
     if (mode === 'edit' && noteId) {
-      await NotesService.toggleChecklistItem(noteId, itemId);
+      await notesService.toggleChecklistItem(noteId, itemId);
       loadNote();
     } else {
       // For new notes, toggle in local state

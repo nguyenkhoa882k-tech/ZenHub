@@ -55,18 +55,18 @@ A React Native all-in-one utility & fun hub app featuring notes, Pomodoro timer,
 
 3. **Configure environment variables**
 
-   Edit `src/config/env.js` and replace placeholder API keys:
+   Edit the `.env` file in the project root and replace placeholder values:
 
-   ```javascript
-   // API Keys (replace with your actual keys)
-   WEATHER_API_KEY: 'your_openweather_api_key',
-   NEWS_API_KEY: 'your_news_api_key',
-   WALLPAPER_API_KEY: 'your_unsplash_access_key',
+   ```env
+   # API Keys (replace with your actual keys)
+   WEATHER_API_KEY=your_openweather_api_key
+   NEWS_API_KEY=your_news_api_key
+   WALLPAPER_API_KEY=your_unsplash_access_key
 
-   // AdMob IDs (replace with your production ad unit IDs)
-   ADMOB_BANNER_ANDROID: 'your_banner_ad_unit_id',
-   ADMOB_BANNER_IOS: 'your_banner_ad_unit_id',
-   // ... more ad unit IDs
+   # AdMob IDs (replace with your production ad unit IDs)
+   ADMOB_BANNER_ANDROID=your_banner_ad_unit_id
+   ADMOB_BANNER_IOS=your_banner_ad_unit_id
+   # ... more ad unit IDs
    ```
 
 4. **iOS setup** (iOS only)
@@ -101,7 +101,6 @@ src/
 ├── components/          # Reusable UI components
 │   └── UI.jsx          # Common components (Card, Button, Badge, etc.)
 ├── config/             # Configuration files
-│   ├── env.js          # Environment variables & API keys
 │   ├── theme.js        # Theme configuration
 │   └── constants.js    # App constants
 ├── navigation/         # Navigation setup
@@ -129,24 +128,24 @@ src/
 
    - Sign up at https://openweathermap.org/api
    - Get your free API key
-   - Add to `env.js` as `WEATHER_API_KEY`
+   - Add to `.env` as `WEATHER_API_KEY`
 
 2. **News API** (News module)
 
    - Sign up at https://newsapi.org
    - Get your free API key
-   - Add to `env.js` as `NEWS_API_KEY`
+   - Add to `.env` as `NEWS_API_KEY`
 
 3. **Unsplash** (Wallpapers module)
    - Sign up at https://unsplash.com/developers
    - Create an app and get access key
-   - Add to `env.js` as `WALLPAPER_API_KEY`
+   - Add to `.env` as `WALLPAPER_API_KEY`
 
 ### AdMob Setup
 
 1. **Create AdMob account** at https://admob.google.com
 2. **Create ad units** for your app
-3. **Replace test ad unit IDs** in `env.js` with your production IDs
+3. **Replace test ad unit IDs** in `.env` with your production IDs
 4. **For development**, current test IDs will work fine
 
 ## 📋 Features Status

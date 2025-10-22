@@ -10,7 +10,7 @@ import {
   RewardedAdEventType,
   MobileAds,
 } from 'react-native-google-mobile-ads';
-import env from '../config/env';
+import Config from 'react-native-config';
 import { STORAGE_KEYS } from '../config/constants';
 import { getItem, setItem } from './storageService';
 
@@ -74,8 +74,8 @@ export const getBannerAdUnitId = () => {
     return TestIds.BANNER;
   }
   return Platform.OS === 'ios'
-    ? env.ADMOB_BANNER_IOS
-    : env.ADMOB_BANNER_ANDROID;
+    ? Config.ADMOB_BANNER_IOS || 'ca-app-pub-3940256099942544/2934735716'
+    : Config.ADMOB_BANNER_ANDROID || 'ca-app-pub-3940256099942544/6300978111';
 };
 
 /**
@@ -86,8 +86,9 @@ export const getInterstitialAdUnitId = () => {
     return TestIds.INTERSTITIAL;
   }
   return Platform.OS === 'ios'
-    ? env.ADMOB_INTERSTITIAL_IOS
-    : env.ADMOB_INTERSTITIAL_ANDROID;
+    ? Config.ADMOB_INTERSTITIAL_IOS || 'ca-app-pub-3940256099942544/4411468910'
+    : Config.ADMOB_INTERSTITIAL_ANDROID ||
+        'ca-app-pub-3940256099942544/1033173712';
 };
 
 /**
@@ -98,8 +99,8 @@ export const getRewardedAdUnitId = () => {
     return TestIds.REWARDED;
   }
   return Platform.OS === 'ios'
-    ? env.ADMOB_REWARDED_IOS
-    : env.ADMOB_REWARDED_ANDROID;
+    ? Config.ADMOB_REWARDED_IOS || 'ca-app-pub-3940256099942544/1712485313'
+    : Config.ADMOB_REWARDED_ANDROID || 'ca-app-pub-3940256099942544/5224354917';
 };
 
 /**
@@ -182,12 +183,14 @@ export const loadRewardedAd = () => {
  * Check if can show interstitial ad
  */
 export const canShowInterstitial = () => {
-  if (!env.ENABLE_ADS) return false;
+  const enableAds = Config.ENABLE_ADS === 'true' || Config.ENABLE_ADS === true;
+  if (!enableAds) return false;
 
   const now = Date.now();
   const timeSinceLastAd = now - lastInterstitialTime;
+  const cooldown = parseInt(Config.INTERSTITIAL_COOLDOWN, 10) || 90000;
 
-  return isAdLoaded && timeSinceLastAd >= env.INTERSTITIAL_COOLDOWN;
+  return isAdLoaded && timeSinceLastAd >= cooldown;
 };
 
 /**
@@ -226,7 +229,8 @@ export const showRewardedAd = async () => {
  * Create Banner Ad Component
  */
 export const createBannerAd = (className = '') => {
-  if (!env.ENABLE_ADS) return null;
+  const enableAds = Config.ENABLE_ADS === 'true' || Config.ENABLE_ADS === true;
+  if (!enableAds) return null;
 
   return (
     <BannerAd
