@@ -10,9 +10,21 @@ import {
   RewardedAdEventType,
   MobileAds,
 } from 'react-native-google-mobile-ads';
-import Config from 'react-native-config';
 import { STORAGE_KEYS } from '../config/constants';
 import { getItem, setItem } from './storageService';
+
+// Ad configuration constants
+const AD_CONFIG = {
+  ENABLE_ADS: true,
+  INTERSTITIAL_COOLDOWN: 90000, // 90 seconds
+  // Use test ad unit IDs for development
+  ADMOB_BANNER_IOS: 'ca-app-pub-3940256099942544/2934735716',
+  ADMOB_BANNER_ANDROID: 'ca-app-pub-3940256099942544/6300978111',
+  ADMOB_INTERSTITIAL_IOS: 'ca-app-pub-3940256099942544/4411468910',
+  ADMOB_INTERSTITIAL_ANDROID: 'ca-app-pub-3940256099942544/1033173712',
+  ADMOB_REWARDED_IOS: 'ca-app-pub-3940256099942544/1712485313',
+  ADMOB_REWARDED_ANDROID: 'ca-app-pub-3940256099942544/5224354917',
+};
 
 // State management
 let isInitialized = false;
@@ -26,13 +38,18 @@ let isAdLoaded = false;
  */
 export const initializeAds = async () => {
   try {
+    console.log('Starting Google Mobile Ads SDK initialization...');
     await MobileAds().initialize();
     isInitialized = true;
     console.log('Google Mobile Ads SDK initialized successfully');
 
-    // Load ads after initialization
-    loadInterstitialAd();
-    loadRewardedAd();
+    // Add a small delay to ensure everything is ready
+    setTimeout(() => {
+      // Load ads after initialization
+      loadInterstitialAd();
+      loadRewardedAd();
+    }, 1000);
+
     await loadLastInterstitialTime();
 
     return true;
@@ -74,8 +91,8 @@ export const getBannerAdUnitId = () => {
     return TestIds.BANNER;
   }
   return Platform.OS === 'ios'
-    ? Config.ADMOB_BANNER_IOS || 'ca-app-pub-3940256099942544/2934735716'
-    : Config.ADMOB_BANNER_ANDROID || 'ca-app-pub-3940256099942544/6300978111';
+    ? AD_CONFIG.ADMOB_BANNER_IOS
+    : AD_CONFIG.ADMOB_BANNER_ANDROID;
 };
 
 /**
@@ -86,9 +103,8 @@ export const getInterstitialAdUnitId = () => {
     return TestIds.INTERSTITIAL;
   }
   return Platform.OS === 'ios'
-    ? Config.ADMOB_INTERSTITIAL_IOS || 'ca-app-pub-3940256099942544/4411468910'
-    : Config.ADMOB_INTERSTITIAL_ANDROID ||
-        'ca-app-pub-3940256099942544/1033173712';
+    ? AD_CONFIG.ADMOB_INTERSTITIAL_IOS
+    : AD_CONFIG.ADMOB_INTERSTITIAL_ANDROID;
 };
 
 /**
@@ -99,48 +115,67 @@ export const getRewardedAdUnitId = () => {
     return TestIds.REWARDED;
   }
   return Platform.OS === 'ios'
-    ? Config.ADMOB_REWARDED_IOS || 'ca-app-pub-3940256099942544/1712485313'
-    : Config.ADMOB_REWARDED_ANDROID || 'ca-app-pub-3940256099942544/5224354917';
+    ? AD_CONFIG.ADMOB_REWARDED_IOS
+    : AD_CONFIG.ADMOB_REWARDED_ANDROID;
 };
 
 /**
  * Load Interstitial Ad
  */
-export const loadInterstitialAd = () => {
+export const loadInterstitialAd = async () => {
   if (!isInitialized) {
     console.log('Google Mobile Ads SDK not initialized yet');
     return;
   }
 
+  const adUnitId = getInterstitialAdUnitId();
+  console.log('Creating InterstitialAd with unit ID:', adUnitId);
+
   try {
-    interstitialAd = InterstitialAd.createForAdUnitId(
-      getInterstitialAdUnitId(),
-    );
+    // Use the correct API method for this version
+    if (typeof InterstitialAd.createForAdRequest === 'function') {
+      // Create ad request object
+      const adRequest = {
+        requestNonPersonalizedAdsOnly: true,
+      };
 
-    interstitialAd.addAdEventListener(AdEventType.LOADED, () => {
-      isAdLoaded = true;
-      console.log('Interstitial ad loaded successfully');
-    });
+      // Create InterstitialAd instance using the correct API
+      interstitialAd = InterstitialAd.createForAdRequest(adUnitId, adRequest);
 
-    interstitialAd.addAdEventListener(AdEventType.CLOSED, () => {
-      isAdLoaded = false;
-      saveLastInterstitialTime();
-      // Preload next ad
-      setTimeout(() => {
-        loadInterstitialAd();
-      }, 1000);
-    });
+      // Set up event listeners
+      interstitialAd.addAdEventListener(AdEventType.LOADED, () => {
+        isAdLoaded = true;
+        console.log('Interstitial ad loaded successfully');
+      });
 
-    interstitialAd.addAdEventListener(AdEventType.ERROR, error => {
-      console.log('Interstitial ad error:', error);
-      isAdLoaded = false;
-      // Retry loading after delay
-      setTimeout(() => {
-        loadInterstitialAd();
-      }, 5000);
-    });
+      interstitialAd.addAdEventListener(AdEventType.CLOSED, () => {
+        isAdLoaded = false;
+        saveLastInterstitialTime();
+        // Preload next ad
+        setTimeout(() => {
+          loadInterstitialAd();
+        }, 1000);
+      });
 
-    interstitialAd.load();
+      interstitialAd.addAdEventListener(AdEventType.ERROR, error => {
+        console.log('Interstitial ad error:', error);
+        isAdLoaded = false;
+        // Retry loading after delay
+        setTimeout(() => {
+          loadInterstitialAd();
+        }, 5000);
+      });
+
+      // Load the ad
+      interstitialAd.load();
+      console.log('InterstitialAd created and loading...');
+    } else {
+      console.log('InterstitialAd.createForAdRequest method not available');
+      console.log(
+        'Available methods:',
+        Object.getOwnPropertyNames(InterstitialAd),
+      );
+    }
   } catch (error) {
     console.log('Error creating InterstitialAd:', error);
   }
@@ -149,31 +184,51 @@ export const loadInterstitialAd = () => {
 /**
  * Load Rewarded Ad
  */
-export const loadRewardedAd = () => {
+export const loadRewardedAd = async () => {
   if (!isInitialized) {
     console.log('Google Mobile Ads SDK not initialized yet');
     return;
   }
 
+  const adUnitId = getRewardedAdUnitId();
+  console.log('Creating RewardedAd with unit ID:', adUnitId);
+
   try {
-    rewardedAd = RewardedAd.createForAdUnitId(getRewardedAdUnitId());
+    // Use the correct API method for this version
+    if (typeof RewardedAd.createForAdRequest === 'function') {
+      // Create ad request object
+      const adRequest = {
+        requestNonPersonalizedAdsOnly: true,
+      };
 
-    rewardedAd.addAdEventListener(RewardedAdEventType.LOADED, () => {
-      console.log('Rewarded ad loaded');
-    });
+      // Create RewardedAd instance using the correct API
+      rewardedAd = RewardedAd.createForAdRequest(adUnitId, adRequest);
 
-    rewardedAd.addAdEventListener(RewardedAdEventType.EARNED_REWARD, reward => {
-      console.log('Rewarded ad earned reward:', reward);
-    });
+      rewardedAd.addAdEventListener(RewardedAdEventType.LOADED, () => {
+        console.log('Rewarded ad loaded');
+      });
 
-    rewardedAd.addAdEventListener(AdEventType.CLOSED, () => {
-      // Preload next ad
-      setTimeout(() => {
-        loadRewardedAd();
-      }, 1000);
-    });
+      rewardedAd.addAdEventListener(
+        RewardedAdEventType.EARNED_REWARD,
+        reward => {
+          console.log('Rewarded ad earned reward:', reward);
+        },
+      );
 
-    rewardedAd.load();
+      rewardedAd.addAdEventListener(AdEventType.CLOSED, () => {
+        // Preload next ad
+        setTimeout(() => {
+          loadRewardedAd();
+        }, 1000);
+      });
+
+      // Load the ad
+      rewardedAd.load();
+      console.log('RewardedAd created and loading...');
+    } else {
+      console.log('RewardedAd.createForAdRequest method not available');
+      console.log('Available methods:', Object.getOwnPropertyNames(RewardedAd));
+    }
   } catch (error) {
     console.log('Error creating RewardedAd:', error);
   }
@@ -183,12 +238,12 @@ export const loadRewardedAd = () => {
  * Check if can show interstitial ad
  */
 export const canShowInterstitial = () => {
-  const enableAds = Config.ENABLE_ADS === 'true' || Config.ENABLE_ADS === true;
+  const enableAds = AD_CONFIG.ENABLE_ADS;
   if (!enableAds) return false;
 
   const now = Date.now();
   const timeSinceLastAd = now - lastInterstitialTime;
-  const cooldown = parseInt(Config.INTERSTITIAL_COOLDOWN, 10) || 90000;
+  const cooldown = AD_CONFIG.INTERSTITIAL_COOLDOWN;
 
   return isAdLoaded && timeSinceLastAd >= cooldown;
 };
@@ -197,7 +252,7 @@ export const canShowInterstitial = () => {
  * Show Interstitial Ad
  */
 export const showInterstitial = async () => {
-  if (canShowInterstitial()) {
+  if (canShowInterstitial() && interstitialAd) {
     try {
       await interstitialAd.show();
       return true;
@@ -229,7 +284,7 @@ export const showRewardedAd = async () => {
  * Create Banner Ad Component
  */
 export const createBannerAd = (className = '') => {
-  const enableAds = Config.ENABLE_ADS === 'true' || Config.ENABLE_ADS === true;
+  const enableAds = AD_CONFIG.ENABLE_ADS;
   if (!enableAds) return null;
 
   return (

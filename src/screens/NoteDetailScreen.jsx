@@ -5,11 +5,11 @@ import {
   TextInput,
   ScrollView,
   TouchableOpacity,
-  SafeAreaView,
   Alert,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Icon from '@react-native-vector-icons/ionicons';
 import { Card, CardContent, Button, Badge } from '../components/UI';

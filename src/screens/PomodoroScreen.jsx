@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, SafeAreaView, Alert } from 'react-native';
+import { View, Text, Alert } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Card, CardContent, Button } from '../components/UI';
 import { formatTime } from '../utils/helpers';
 import { DEFAULT_POMODORO_SETTINGS } from '../config/constants';
