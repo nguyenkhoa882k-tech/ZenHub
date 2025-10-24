@@ -44,11 +44,14 @@ export const initialize = async () => {
  * Khởi tạo SQLite database
  */
 const initSQLite = async () => {
+  console.log('OPEN database:', NOTES_CONFIG.DB_NAME);
+
   db = await SQLite.openDatabase({
     name: NOTES_CONFIG.DB_NAME,
     location: 'default',
-    createFromLocation: '~www/notes.db',
   });
+
+  console.log('✅ SQLite database opened successfully');
 
   // Tạo các bảng
   await createTables();
@@ -56,8 +59,8 @@ const initSQLite = async () => {
   // Enable foreign keys
   await db.executeSql('PRAGMA foreign_keys = ON;');
 
-  // Create FTS virtual table for full-text search
-  await createFTSTable();
+  // Create FTS virtual table for full-text search (disabled for now due to fts5 not supported)
+  // await createFTSTable();
 };
 
 /**
@@ -314,7 +317,7 @@ export const clear = async () => {
     for (const table of tables) {
       await executeSql(`DELETE FROM ${table}`);
     }
-    await executeSql('DELETE FROM notes_fts');
+    // Commented out: await executeSql('DELETE FROM notes_fts');
   } else {
     await AsyncStorage.clear();
   }

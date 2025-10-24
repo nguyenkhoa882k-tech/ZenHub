@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import Icon from '@react-native-vector-icons/ionicons';
-import { notesService } from '../../services/notes/notesService';
+import notesService from '../../services/notes/notesService';
 import { NOTES_CONFIG } from '../../config/notes/notesConfig';
 import NoteCard from '../../components/notes/NoteCard';
 import QuickCaptureModal from '../../components/notes/QuickCaptureModal';
@@ -316,6 +316,16 @@ const NotesHome = () => {
       ]}
     >
       <View style={styles.searchBar}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
+          <Icon
+            name="arrow-back"
+            size={24}
+            color={NOTES_CONFIG.COLORS.TEXT_PRIMARY}
+          />
+        </TouchableOpacity>
         <Icon
           name="search-outline"
           size={20}
@@ -662,6 +672,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     marginBottom: 8,
+  },
+  backButton: {
+    padding: 4,
+    marginRight: 8,
   },
   searchInput: {
     flex: 1,

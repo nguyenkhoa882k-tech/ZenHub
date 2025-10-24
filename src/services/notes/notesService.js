@@ -487,19 +487,24 @@ export const createTag = async (name, color = '#6B7280') => {
  * Lấy tất cả tags
  */
 export const getAllTags = async () => {
-  if (storageService.getStorageType() === 'SQLITE') {
-    const sql = 'SELECT * FROM tags ORDER BY name';
-    const result = await storageService.executeSql(sql);
-    const tags = [];
+  try {
+    if (storageService.getStorageType() === 'SQLITE') {
+      const sql = 'SELECT * FROM tags ORDER BY name';
+      const result = await storageService.executeSql(sql);
+      const tags = [];
 
-    for (let i = 0; i < result.rows.length; i++) {
-      tags.push(result.rows.item(i));
+      for (let i = 0; i < result.rows.length; i++) {
+        tags.push(result.rows.item(i));
+      }
+
+      return tags;
+    } else {
+      const tags = (await storageService.getItem('tags')) || {};
+      return Object.values(tags);
     }
-
-    return tags;
-  } else {
-    const tags = (await storageService.getItem('tags')) || {};
-    return Object.values(tags);
+  } catch (error) {
+    console.error('getAllTags error:', error);
+    return [];
   }
 };
 

@@ -231,7 +231,7 @@ export const NOTES_FEATURES = {
   CALENDAR_VIEW: true,
   TIMELINE_VIEW: true,
   BACKLINKS: true,
-  FULL_TEXT_SEARCH: true,
+  FULL_TEXT_SEARCH: false, // Disabled due to FTS5 not supported in React Native SQLite
   LOCAL_NOTIFICATIONS: true,
   SOUND_EFFECTS: true,
   ENCRYPTION: true,

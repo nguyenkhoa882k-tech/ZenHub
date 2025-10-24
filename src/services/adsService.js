@@ -132,50 +132,38 @@ export const loadInterstitialAd = async () => {
   console.log('Creating InterstitialAd with unit ID:', adUnitId);
 
   try {
-    // Use the correct API method for this version
-    if (typeof InterstitialAd.createForAdRequest === 'function') {
-      // Create ad request object
-      const adRequest = {
-        requestNonPersonalizedAdsOnly: true,
-      };
+    // Use the correct API method for version 15.x
+    interstitialAd = InterstitialAd.createForAdRequest(adUnitId, {
+      requestNonPersonalizedAdsOnly: true,
+    });
 
-      // Create InterstitialAd instance using the correct API
-      interstitialAd = InterstitialAd.createForAdRequest(adUnitId, adRequest);
+    // Set up event listeners
+    interstitialAd.addAdEventListener(AdEventType.LOADED, () => {
+      isAdLoaded = true;
+      console.log('Interstitial ad loaded successfully');
+    });
 
-      // Set up event listeners
-      interstitialAd.addAdEventListener(AdEventType.LOADED, () => {
-        isAdLoaded = true;
-        console.log('Interstitial ad loaded successfully');
-      });
+    interstitialAd.addAdEventListener(AdEventType.CLOSED, () => {
+      isAdLoaded = false;
+      saveLastInterstitialTime();
+      // Preload next ad
+      setTimeout(() => {
+        loadInterstitialAd();
+      }, 1000);
+    });
 
-      interstitialAd.addAdEventListener(AdEventType.CLOSED, () => {
-        isAdLoaded = false;
-        saveLastInterstitialTime();
-        // Preload next ad
-        setTimeout(() => {
-          loadInterstitialAd();
-        }, 1000);
-      });
+    interstitialAd.addAdEventListener(AdEventType.ERROR, error => {
+      console.log('Interstitial ad error:', error);
+      isAdLoaded = false;
+      // Retry loading after delay
+      setTimeout(() => {
+        loadInterstitialAd();
+      }, 5000);
+    });
 
-      interstitialAd.addAdEventListener(AdEventType.ERROR, error => {
-        console.log('Interstitial ad error:', error);
-        isAdLoaded = false;
-        // Retry loading after delay
-        setTimeout(() => {
-          loadInterstitialAd();
-        }, 5000);
-      });
-
-      // Load the ad
-      interstitialAd.load();
-      console.log('InterstitialAd created and loading...');
-    } else {
-      console.log('InterstitialAd.createForAdRequest method not available');
-      console.log(
-        'Available methods:',
-        Object.getOwnPropertyNames(InterstitialAd),
-      );
-    }
+    // Load the ad
+    interstitialAd.load();
+    console.log('InterstitialAd created and loading...');
   } catch (error) {
     console.log('Error creating InterstitialAd:', error);
   }
@@ -194,41 +182,29 @@ export const loadRewardedAd = async () => {
   console.log('Creating RewardedAd with unit ID:', adUnitId);
 
   try {
-    // Use the correct API method for this version
-    if (typeof RewardedAd.createForAdRequest === 'function') {
-      // Create ad request object
-      const adRequest = {
-        requestNonPersonalizedAdsOnly: true,
-      };
+    // Use the correct API method for version 15.x
+    rewardedAd = RewardedAd.createForAdRequest(adUnitId, {
+      requestNonPersonalizedAdsOnly: true,
+    });
 
-      // Create RewardedAd instance using the correct API
-      rewardedAd = RewardedAd.createForAdRequest(adUnitId, adRequest);
+    rewardedAd.addAdEventListener(RewardedAdEventType.LOADED, () => {
+      console.log('Rewarded ad loaded');
+    });
 
-      rewardedAd.addAdEventListener(RewardedAdEventType.LOADED, () => {
-        console.log('Rewarded ad loaded');
-      });
+    rewardedAd.addAdEventListener(RewardedAdEventType.EARNED_REWARD, reward => {
+      console.log('Rewarded ad earned reward:', reward);
+    });
 
-      rewardedAd.addAdEventListener(
-        RewardedAdEventType.EARNED_REWARD,
-        reward => {
-          console.log('Rewarded ad earned reward:', reward);
-        },
-      );
+    rewardedAd.addAdEventListener(AdEventType.CLOSED, () => {
+      // Preload next ad
+      setTimeout(() => {
+        loadRewardedAd();
+      }, 1000);
+    });
 
-      rewardedAd.addAdEventListener(AdEventType.CLOSED, () => {
-        // Preload next ad
-        setTimeout(() => {
-          loadRewardedAd();
-        }, 1000);
-      });
-
-      // Load the ad
-      rewardedAd.load();
-      console.log('RewardedAd created and loading...');
-    } else {
-      console.log('RewardedAd.createForAdRequest method not available');
-      console.log('Available methods:', Object.getOwnPropertyNames(RewardedAd));
-    }
+    // Load the ad
+    rewardedAd.load();
+    console.log('RewardedAd created and loading...');
   } catch (error) {
     console.log('Error creating RewardedAd:', error);
   }

@@ -13,7 +13,7 @@ import {
   ScrollView,
 } from 'react-native';
 import Icon from '@react-native-vector-icons/ionicons';
-import { notesService } from '../../services/notes/notesService';
+import notesService from '../../services/notes/notesService';
 import { NOTES_CONFIG } from '../../config/notes/notesConfig';
 
 const QuickCaptureModal = ({
@@ -30,6 +30,9 @@ const QuickCaptureModal = ({
   const [captureMode, setCaptureMode] = useState('text'); // 'text' | 'voice' | 'checklist'
   const [saving, setSaving] = useState(false);
 
+  console.log('QuickCaptureModal initialData:', initialData);
+  console.log('Initial selectedTags:', selectedTags);
+
   // Animation refs
   const slideAnim = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -41,6 +44,8 @@ const QuickCaptureModal = ({
   useEffect(() => {
     if (visible) {
       animateIn();
+      console.log('123');
+
       loadTags();
 
       // Auto focus title input
@@ -85,7 +90,17 @@ const QuickCaptureModal = ({
 
   const loadTags = async () => {
     try {
+      console.log('Loading tags...');
+      console.log('notesService initialized?', notesService.initialized);
+
+      // Ensure service is initialized
+      if (!notesService.initialized) {
+        console.log('Initializing notesService...');
+        await notesService.initialize();
+      }
+
       const tags = await notesService.getAllTags();
+      console.log('Loaded tags:', tags);
       setAvailableTags(tags);
     } catch (error) {
       console.error('Error loading tags:', error);
@@ -445,10 +460,13 @@ const styles = StyleSheet.create({
     backgroundColor: NOTES_CONFIG.COLORS.SURFACE,
     borderTopLeftRadius: NOTES_CONFIG.UI.MODAL_BORDER_RADIUS,
     borderTopRightRadius: NOTES_CONFIG.UI.MODAL_BORDER_RADIUS,
-    maxHeight: '80%',
+    maxHeight: '95%',
+    minHeight: '70%',
+    flex: 0,
   },
   keyboardAvoid: {
-    maxHeight: '100%',
+    flex: 1,
+    minHeight: 400,
   },
   header: {
     flexDirection: 'row',
@@ -511,25 +529,33 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+    paddingBottom: 20,
   },
   inputSection: {
     paddingHorizontal: 20,
-    paddingVertical: 12,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: NOTES_CONFIG.COLORS.BORDER + '30',
   },
   titleInput: {
     fontSize: NOTES_CONFIG.TEXT_SIZES.LG,
     fontWeight: '600',
     color: NOTES_CONFIG.COLORS.TEXT_PRIMARY,
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: NOTES_CONFIG.COLORS.BORDER,
+    paddingVertical: 12,
+    paddingHorizontal: 4,
+    backgroundColor: 'transparent',
+    borderWidth: 0,
   },
   contentInput: {
     fontSize: NOTES_CONFIG.TEXT_SIZES.BASE,
     color: NOTES_CONFIG.COLORS.TEXT_PRIMARY,
     paddingVertical: 12,
+    paddingHorizontal: 4,
     minHeight: 120,
+    maxHeight: 200,
     lineHeight: 22,
+    backgroundColor: 'transparent',
+    textAlignVertical: 'top',
   },
   checklistInput: {
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
@@ -545,6 +571,11 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: NOTES_CONFIG.COLORS.TEXT_SECONDARY,
     marginBottom: 12,
+  },
+  debugText: {
+    fontSize: 12,
+    color: 'red',
+    marginBottom: 8,
   },
   selectedTagsContainer: {
     flexDirection: 'row',
