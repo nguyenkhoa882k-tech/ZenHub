@@ -1,21 +1,27 @@
+import { useState, useCallback, useRef } from 'react';
+
 /**
- * Sound Service for Pomodoro Timer
- * Handles sound effects for timer events
+ * Sound Service for ZenHub App
+ * Handles sound effects for app events
+ * Converted to function-based with React hooks
  */
 
-class SoundService {
-  constructor() {
-    this.soundEnabled = true;
-  }
+// Global state for sound service
+let globalSoundState = {
+  soundEnabled: true,
+};
 
-  /**
-   * Play session start sound
-   */
-  playStartSound() {
-    if (!this.soundEnabled) return;
+// Custom hook for Sound functionality
+export const useSoundService = () => {
+  const [soundEnabled, setSoundEnabled] = useState(
+    globalSoundState.soundEnabled,
+  );
+  const soundRef = useRef(null);
 
-    // For now, we'll use a simple vibration as placeholder
-    // In a real app, you would use react-native-sound or similar
+  // Play session start sound
+  const playStartSound = useCallback(() => {
+    if (!soundEnabled) return;
+
     try {
       console.log('🔊 Playing start sound');
       // Vibration pattern for start: short-long
@@ -23,13 +29,11 @@ class SoundService {
     } catch (error) {
       console.warn('Failed to play start sound:', error);
     }
-  }
+  }, [soundEnabled]);
 
-  /**
-   * Play session complete sound
-   */
-  playCompleteSound() {
-    if (!this.soundEnabled) return;
+  // Play session complete sound
+  const playCompleteSound = useCallback(() => {
+    if (!soundEnabled) return;
 
     try {
       console.log('🔊 Playing complete sound');
@@ -38,13 +42,11 @@ class SoundService {
     } catch (error) {
       console.warn('Failed to play complete sound:', error);
     }
-  }
+  }, [soundEnabled]);
 
-  /**
-   * Play pause sound
-   */
-  playPauseSound() {
-    if (!this.soundEnabled) return;
+  // Play pause sound
+  const playPauseSound = useCallback(() => {
+    if (!soundEnabled) return;
 
     try {
       console.log('🔊 Playing pause sound');
@@ -53,13 +55,11 @@ class SoundService {
     } catch (error) {
       console.warn('Failed to play pause sound:', error);
     }
-  }
+  }, [soundEnabled]);
 
-  /**
-   * Play resume sound
-   */
-  playResumeSound() {
-    if (!this.soundEnabled) return;
+  // Play resume sound
+  const playResumeSound = useCallback(() => {
+    if (!soundEnabled) return;
 
     try {
       console.log('🔊 Playing resume sound');
@@ -68,23 +68,88 @@ class SoundService {
     } catch (error) {
       console.warn('Failed to play resume sound:', error);
     }
-  }
+  }, [soundEnabled]);
 
-  /**
-   * Enable/disable sounds
-   */
-  setSoundEnabled(enabled) {
-    this.soundEnabled = enabled;
-  }
+  // Enable/disable sounds
+  const setSoundEnabledState = useCallback(enabled => {
+    globalSoundState.soundEnabled = enabled;
+    setSoundEnabled(enabled);
+  }, []);
 
-  /**
-   * Get sound status
-   */
-  isSoundEnabled() {
-    return this.soundEnabled;
-  }
-}
+  // Get sound status
+  const isSoundEnabled = useCallback(() => {
+    return soundEnabled;
+  }, [soundEnabled]);
 
-// Export singleton instance
-const soundService = new SoundService();
+  return {
+    soundEnabled,
+    playStartSound,
+    playCompleteSound,
+    playPauseSound,
+    playResumeSound,
+    setSoundEnabled: setSoundEnabledState,
+    isSoundEnabled,
+  };
+};
+
+// Legacy singleton for backward compatibility
+const createSoundService = () => {
+  let soundEnabled = true;
+
+  const playStartSound = () => {
+    if (!soundEnabled) return;
+    try {
+      console.log('🔊 Playing start sound');
+    } catch (error) {
+      console.warn('Failed to play start sound:', error);
+    }
+  };
+
+  const playCompleteSound = () => {
+    if (!soundEnabled) return;
+    try {
+      console.log('🔊 Playing complete sound');
+    } catch (error) {
+      console.warn('Failed to play complete sound:', error);
+    }
+  };
+
+  const playPauseSound = () => {
+    if (!soundEnabled) return;
+    try {
+      console.log('🔊 Playing pause sound');
+    } catch (error) {
+      console.warn('Failed to play pause sound:', error);
+    }
+  };
+
+  const playResumeSound = () => {
+    if (!soundEnabled) return;
+    try {
+      console.log('🔊 Playing resume sound');
+    } catch (error) {
+      console.warn('Failed to play resume sound:', error);
+    }
+  };
+
+  const setSoundEnabled = enabled => {
+    soundEnabled = enabled;
+  };
+
+  const isSoundEnabled = () => {
+    return soundEnabled;
+  };
+
+  return {
+    playStartSound,
+    playCompleteSound,
+    playPauseSound,
+    playResumeSound,
+    setSoundEnabled,
+    isSoundEnabled,
+  };
+};
+
+// Export singleton instance for backward compatibility
+const soundService = createSoundService();
 export default soundService;

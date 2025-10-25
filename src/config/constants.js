@@ -2,7 +2,6 @@
 export const MODULES = {
   HOME: 'Home',
   NOTES: 'Notes',
-  POMODORO: 'Pomodoro',
   QUOTES: 'Quotes',
   WEATHER: 'Weather',
   WALLPAPER: 'Wallpaper',
@@ -13,8 +12,6 @@ export const MODULES = {
 
 export const STORAGE_KEYS = {
   NOTES: '@zenhub_notes',
-  POMODORO_SETTINGS: '@zenhub_pomodoro_settings',
-  POMODORO_HISTORY: '@zenhub_pomodoro_history',
   WEATHER_CACHE: '@zenhub_weather_cache',
   QUOTES_CACHE: '@zenhub_quotes_cache',
   NEWS_CACHE: '@zenhub_news_cache',
@@ -23,16 +20,6 @@ export const STORAGE_KEYS = {
   APP_SETTINGS: '@zenhub_app_settings',
   AD_SETTINGS: '@zenhub_ad_settings',
   LAST_INTERSTITIAL: '@zenhub_last_interstitial',
-};
-
-export const DEFAULT_POMODORO_SETTINGS = {
-  workDuration: 25 * 60, // 25 minutes in seconds
-  shortBreakDuration: 5 * 60, // 5 minutes in seconds
-  longBreakDuration: 15 * 60, // 15 minutes in seconds
-  longBreakInterval: 4, // After 4 work sessions
-  soundEnabled: true,
-  vibrationEnabled: true,
-  notificationsEnabled: true,
 };
 
 export const WEATHER_CONDITIONS = {

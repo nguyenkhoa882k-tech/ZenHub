@@ -7,7 +7,6 @@ import { MODULES } from '../config/constants';
 import HomeScreen from '../screens/HomeScreen';
 import NotesScreen from '../screens/NotesScreen';
 import NoteDetailScreen from '../screens/notes/NoteDetail';
-import PomodoroScreen from '../screens/PomodoroScreen';
 import QuotesScreen from '../screens/QuotesScreen';
 import WeatherScreen from '../screens/WeatherScreen';
 import WallpaperScreen from '../screens/WallpaperScreen';
@@ -49,8 +48,6 @@ const AppNavigator = () => {
         <Stack.Screen name={MODULES.NOTES} component={NotesScreen} />
 
         <Stack.Screen name="NoteDetail" component={NoteDetailScreen} />
-
-        <Stack.Screen name={MODULES.POMODORO} component={PomodoroScreen} />
 
         <Stack.Screen name={MODULES.QUOTES} component={QuotesScreen} />
 

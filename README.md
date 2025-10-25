@@ -1,13 +1,12 @@
 # ZenHub – Notes, Focus & Fun
 
-A React Native all-in-one utility & fun hub app featuring notes, Pomodoro timer, quotes, weather, wallpapers, news, dictionary, and math game modules.
+A React Native all-in-one utility & fun hub app featuring notes, quotes, weather, wallpapers, news, dictionary, and math game modules.
 
 ## ✨ Features
 
 ### Core Modules
 
 - 🗒️ **Notes & To-Do** - CRUD operations with offline storage, tags, search, and export
-- ⏱️ **Pomodoro Timer** - Customizable work/break intervals with notifications
 - 💬 **Quotes** - Daily inspirational quotes (Coming Soon)
 - ☀️ **Weather** - Current conditions and forecasts (Coming Soon)
 - 🖼️ **Wallpapers** - Browse and download beautiful images (Coming Soon)
@@ -109,7 +108,6 @@ src/
 │   ├── HomeScreen.jsx
 │   ├── NotesScreen.jsx
 │   ├── NoteDetailScreen.jsx
-│   ├── PomodoroScreen.jsx
 │   └── ...
 ├── services/           # Business logic & API calls
 │   ├── storageService.js
@@ -152,7 +150,6 @@ src/
 
 - ✅ **Home Module** - Complete
 - ✅ **Notes & To-Do** - Complete with CRUD, tags, search
-- ✅ **Pomodoro Timer** - Complete with customizable intervals
 - 🚧 **Quotes** - API integration pending
 - 🚧 **Weather** - API integration pending
 - 🚧 **Wallpapers** - API integration pending

@@ -96,14 +96,6 @@ const HomeScreen = () => {
       iconGradient: ['#667eea', '#764ba2'],
     },
     {
-      id: MODULES.POMODORO,
-      title: 'Hẹn Giờ Pomodoro',
-      icon: 'timer-outline',
-      description: 'Tập trung & năng suất',
-      bgColor: '#f093fb',
-      iconGradient: ['#f093fb', '#f5576c'],
-    },
-    {
       id: MODULES.QUOTES,
       title: 'Câu Nói Hay Hàng Ngày',
       icon: 'chatbubble-outline',
