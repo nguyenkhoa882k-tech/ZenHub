@@ -37,6 +37,13 @@ let isAdLoaded = false;
  * Initialize Google Mobile Ads SDK
  */
 export const initializeAds = async () => {
+  if (isInitialized) {
+    if (__DEV__) {
+      console.log('Google Mobile Ads SDK already initialized');
+    }
+    return true;
+  }
+
   try {
     console.log('Starting Google Mobile Ads SDK initialization...');
     await MobileAds().initialize();
@@ -128,8 +135,18 @@ export const loadInterstitialAd = async () => {
     return;
   }
 
+  // Prevent creating multiple ads
+  if (interstitialAd && isAdLoaded) {
+    if (__DEV__) {
+      console.log('Interstitial ad already loaded, skipping...');
+    }
+    return;
+  }
+
   const adUnitId = getInterstitialAdUnitId();
-  console.log('Creating InterstitialAd with unit ID:', adUnitId);
+  if (__DEV__) {
+    console.log('Creating InterstitialAd with unit ID:', adUnitId);
+  }
 
   try {
     // Use the correct API method for version 15.x
@@ -153,7 +170,10 @@ export const loadInterstitialAd = async () => {
     });
 
     interstitialAd.addAdEventListener(AdEventType.ERROR, error => {
-      console.log('Interstitial ad error:', error);
+      // Only log non-fill errors in development mode
+      if (__DEV__ && !error.message?.includes('No fill')) {
+        console.log('Interstitial ad error:', error);
+      }
       isAdLoaded = false;
       // Retry loading after delay
       setTimeout(() => {
@@ -163,7 +183,9 @@ export const loadInterstitialAd = async () => {
 
     // Load the ad
     interstitialAd.load();
-    console.log('InterstitialAd created and loading...');
+    if (__DEV__) {
+      console.log('InterstitialAd created and loading...');
+    }
   } catch (error) {
     console.log('Error creating InterstitialAd:', error);
   }
@@ -278,7 +300,11 @@ export const createBannerAd = (className = '') => {
 /**
  * Initialize ads service when module loads
  */
-initializeAds();
+/**
+ * Auto-initialize ads when needed
+ * Comment out auto-init to prevent multiple calls
+ */
+// initializeAds();
 
 // Default export for backward compatibility
 const adsService = {

@@ -1,5 +1,6 @@
 import * as storageService from './storageService';
 import { NOTES_CONFIG, NOTES_FEATURES } from '../../config/notes/notesConfig';
+import { logger } from '../../config/debug';
 
 /**
  * Notes Service - Quản lý tất cả operations liên quan đến notes
@@ -32,7 +33,7 @@ export const initialize = async () => {
   await initializeDefaultTags();
 
   initialized = true;
-  console.log('✅ NotesService initialized');
+  logger.log('NOTES', '✅ NotesService initialized');
 };
 
 /**

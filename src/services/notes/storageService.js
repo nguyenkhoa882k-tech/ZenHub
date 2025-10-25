@@ -2,8 +2,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import SQLite from 'react-native-sqlite-storage';
 import { NOTES_CONFIG } from '../../config/notes/notesConfig';
 
-// Enable SQLite debug mode in development
-SQLite.DEBUG(__DEV__);
+// Enable SQLite debug mode only for critical errors
+SQLite.DEBUG(false);
 SQLite.enablePromise(true);
 
 /**
@@ -27,7 +27,9 @@ export const initialize = async () => {
       await initAsyncStorage();
     }
     isInitialized = true;
-    console.log(`✅ Storage initialized: ${storageType}`);
+    if (__DEV__) {
+      console.log(`✅ Storage initialized: ${storageType}`);
+    }
   } catch (error) {
     console.error('❌ Storage initialization failed:', error);
     // Fallback to AsyncStorage
@@ -44,7 +46,9 @@ export const initialize = async () => {
  * Khởi tạo SQLite database
  */
 const initSQLite = async () => {
-  console.log('OPEN database:', NOTES_CONFIG.DB_NAME);
+  if (__DEV__) {
+    console.log('OPEN database:', NOTES_CONFIG.DB_NAME);
+  }
 
   db = await SQLite.openDatabase({
     name: NOTES_CONFIG.DB_NAME,

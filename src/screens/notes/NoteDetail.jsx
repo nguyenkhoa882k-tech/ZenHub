@@ -14,7 +14,6 @@ import {
   StatusBar,
   Dimensions,
   Share,
-  Vibration,
 } from 'react-native';
 import {
   useNavigation,
@@ -24,6 +23,8 @@ import {
 import Icon from '@react-native-vector-icons/ionicons';
 import notesService from '../../services/notes/notesService';
 import { NOTES_CONFIG } from '../../config/notes/notesConfig';
+import { getSafeHeaderPadding } from '../../utils/statusBar';
+import { safeVibrate } from '../../utils/vibration';
 
 const { height } = Dimensions.get('window');
 
@@ -85,28 +86,29 @@ const NoteDetail = () => {
     return () => StatusBar.setBarStyle('default');
   }, [loadData]);
 
-  useEffect(() => {
-    StatusBar.setBarStyle('light-content');
-    loadData();
-    return () => StatusBar.setBarStyle('default');
-  }, [loadData]);
-
   const loadNote = async () => {
     try {
-      console.log('🔍 Loading note with ID:', noteId);
-      console.log('📝 NotesService methods:', Object.keys(notesService));
-      console.log('🎯 getNoteById function:', typeof notesService.getNoteById);
+      if (__DEV__) {
+        console.log('🔍 Loading note with ID:', noteId);
+      }
 
       const noteData = await notesService.getNoteById(noteId);
       if (noteData) {
         setTitle(noteData.title || '');
         setContent(noteData.content || '');
-        setTags(noteData.tags || []);
+
+        // Convert tags from object array to string array
+        const parsedTags = Array.isArray(noteData.tags)
+          ? noteData.tags.map(tag =>
+              typeof tag === 'string' ? tag : tag?.name || tag,
+            )
+          : [];
+        setTags(parsedTags);
 
         originalDataRef.current = {
           title: noteData.title || '',
           content: noteData.content || '',
-          tags: noteData.tags || [],
+          tags: parsedTags,
         };
 
         animateIn();
@@ -251,15 +253,21 @@ const NoteDetail = () => {
     }
 
     setSaving(true);
-    if (!silent) Vibration.vibrate(50);
+
+    // Safe vibration - handle permission errors
+    if (!silent) {
+      safeVibrate(50);
+    }
 
     try {
       const noteData = {
         title: title.trim() || 'Không có tiêu đề',
         content: content.trim(),
-        tags: tags,
+        tags: tags.filter(tag => typeof tag === 'string' && tag.trim()), // Ensure only valid strings
         updatedAt: new Date().toISOString(),
       };
+
+      console.log('Saving note with data:', noteData);
 
       let savedNote = noteData;
       if (noteId) {
@@ -278,7 +286,9 @@ const NoteDetail = () => {
       }
     } catch (error) {
       console.error('Error saving note:', error);
-      if (!silent) Alert.alert('Lỗi', 'Không thể lưu ghi chú');
+      console.error('Error details:', error.message, error.stack);
+      if (!silent)
+        Alert.alert('Lỗi', `Không thể lưu ghi chú: ${error.message}`);
     } finally {
       setSaving(false);
     }
@@ -294,7 +304,7 @@ const NoteDetail = () => {
         onPress: async () => {
           try {
             await notesService.deleteNote(noteId);
-            Vibration.vibrate(100);
+            safeVibrate(100);
             navigation.goBack();
           } catch (error) {
             console.error('Error deleting note:', error);
@@ -401,28 +411,14 @@ const NoteDetail = () => {
       />
 
       {/* Custom Header */}
-      <Animated.View
-        style={[
-          styles.header,
-          {
-            transform: [
-              {
-                translateY: headerAnim.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [-80, 0],
-                }),
-              },
-            ],
-            opacity: headerAnim,
-          },
-        ]}
-      >
+      <View style={styles.header}>
         <View style={styles.headerContent}>
           <TouchableOpacity
             style={styles.headerButton}
-            onPress={() =>
-              hasChanges ? handleBackWithChanges() : navigation.goBack()
-            }
+            onPress={() => {
+              console.log('Back button pressed!');
+              hasChanges ? handleBackWithChanges() : navigation.goBack();
+            }}
           >
             <Icon
               name="arrow-back"
@@ -445,7 +441,10 @@ const NoteDetail = () => {
           <View style={styles.headerActions}>
             <TouchableOpacity
               style={styles.headerActionButton}
-              onPress={toggleStats}
+              onPress={() => {
+                console.log('Stats button pressed!');
+                toggleStats();
+              }}
             >
               <Icon
                 name="stats-chart"
@@ -469,7 +468,10 @@ const NoteDetail = () => {
 
             <TouchableOpacity
               style={styles.headerActionButton}
-              onPress={() => setIsEditing(!isEditing)}
+              onPress={() => {
+                console.log('Edit button pressed!');
+                setIsEditing(!isEditing);
+              }}
             >
               <Icon
                 name={isEditing ? 'eye-outline' : 'create-outline'}
@@ -492,7 +494,7 @@ const NoteDetail = () => {
             )}
           </View>
         </View>
-      </Animated.View>
+      </View>
 
       {/* Stats Panel */}
       <Animated.View
@@ -727,7 +729,7 @@ const styles = StyleSheet.create({
   },
   header: {
     backgroundColor: NOTES_CONFIG.COLORS.SURFACE,
-    paddingTop: Platform.OS === 'ios' ? 50 : 20,
+    paddingTop: Platform.OS === 'ios' ? 50 : 35,
     paddingBottom: 16,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
@@ -737,6 +739,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
+    zIndex: 1000,
   },
   headerContent: {
     flexDirection: 'row',
@@ -749,10 +752,14 @@ const styles = StyleSheet.create({
     backgroundColor: NOTES_CONFIG.COLORS.BACKGROUND,
   },
   headerActionButton: {
-    padding: 8,
+    padding: 12,
     marginLeft: 8,
     borderRadius: 8,
     backgroundColor: NOTES_CONFIG.COLORS.BACKGROUND,
+    minWidth: 44,
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   headerCenter: {
     flex: 1,

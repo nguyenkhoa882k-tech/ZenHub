@@ -18,6 +18,7 @@ import notesService from '../../services/notes/notesService';
 import { NOTES_CONFIG } from '../../config/notes/notesConfig';
 import NoteCard from '../../components/notes/NoteCard';
 import QuickCaptureModal from '../../components/notes/QuickCaptureModal';
+import { getSafeHeaderPadding } from '../../utils/statusBar';
 
 const { width } = Dimensions.get('window');
 
@@ -660,6 +661,7 @@ const styles = StyleSheet.create({
   searchContainer: {
     paddingHorizontal: 16,
     paddingVertical: 12,
+    paddingTop: getSafeHeaderPadding(),
     backgroundColor: NOTES_CONFIG.COLORS.SURFACE,
     borderBottomWidth: 1,
     borderBottomColor: NOTES_CONFIG.COLORS.BORDER,
