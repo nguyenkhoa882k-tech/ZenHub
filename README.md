@@ -57,11 +57,13 @@ A React Native all-in-one utility & fun hub app featuring notes, quotes, weather
    Due to the deprecated `jcenter()` repository, you must run this fix after every `npm install`:
 
    **Windows PowerShell:**
+
    ```powershell
    (Get-Content 'node_modules\react-native-sqlite-storage\platforms\android\build.gradle') -replace 'jcenter\(\)', 'mavenCentral()' | Set-Content 'node_modules\react-native-sqlite-storage\platforms\android\build.gradle'
    ```
 
    **macOS/Linux:**
+
    ```bash
    sed -i.bak 's/jcenter()/mavenCentral()/g' node_modules/react-native-sqlite-storage/platforms/android/build.gradle
    ```
@@ -240,6 +242,36 @@ You've successfully run and modified your React Native App. :partying_face:
 - If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
 
 # Troubleshooting
+
+## Common Issues
+
+### React Native SQLite Storage jcenter() Error
+If you see `Could not find method jcenter()` error:
+- The postinstall script should fix this automatically
+- If not, run the manual fix command from step 3 in installation
+
+### Metro Bundler Dependency Resolution
+If you see module resolution errors like `event-target-shim`:
+```bash
+# Reset Metro cache
+npm run start:fresh
+
+# Or clean and restart
+npm run clean
+```
+
+### Build Issues
+```bash
+# Clean Android build
+cd android && ./gradlew clean && cd ..
+
+# Reset Metro cache
+npx react-native start --reset-cache
+```
+
+For more issues, see [KNOWN_ISSUES.md](./KNOWN_ISSUES.md)
+
+---
 
 If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
 
