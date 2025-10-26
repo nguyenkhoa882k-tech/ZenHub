@@ -39,6 +39,8 @@ const QuickCaptureModal = ({
   const [recordingDuration, setRecordingDuration] = useState(0);
   const [hasPermission, setHasPermission] = useState(false);
   const recordingTimer = useRef(null);
+  const recordingDotAnim = useRef(new Animated.Value(1)).current;
+  const recordingStartTime = useRef(null);
 
   console.log('QuickCaptureModal initialData:', initialData);
   console.log('Initial selectedTags:', selectedTags);
@@ -54,8 +56,6 @@ const QuickCaptureModal = ({
   useEffect(() => {
     if (visible) {
       animateIn();
-      console.log('123');
-
       loadTags();
       setupAudioRecord();
       requestAudioPermission();
@@ -181,17 +181,25 @@ const QuickCaptureModal = ({
   };
 
   const setupAudioRecord = () => {
-    const options = {
-      sampleRate: 16000,
-      channels: 1,
-      bitsPerSample: 16,
-      audioSource: 6, // VOICE_RECOGNITION
-      wavFile: 'voice_note.wav',
-    };
-    AudioRecord.init(options);
+    try {
+      const options = {
+        sampleRate: 16000,
+        channels: 1,
+        bitsPerSample: 16,
+        audioSource: 6, // VOICE_RECOGNITION
+        wavFile: 'voice_note.wav',
+      };
+      console.log('Initializing AudioRecord with options:', options);
+      AudioRecord.init(options);
+      console.log('AudioRecord initialized successfully');
+    } catch (error) {
+      console.error('Error setting up audio record:', error);
+      throw error;
+    }
   };
 
   const startRecording = async () => {
+    console.log('startRecording called');
     const permission = await requestAudioPermission();
     if (!permission) {
       Alert.alert('Lỗi', 'Cần cấp quyền ghi âm để sử dụng tính năng này.');
@@ -199,15 +207,46 @@ const QuickCaptureModal = ({
     }
 
     try {
+      console.log('Setting up audio record...');
       setupAudioRecord();
+
+      console.log('Starting audio record...');
       AudioRecord.start();
+
+      console.log('Setting recording state...');
       setIsRecording(true);
       setRecordingDuration(0);
+      recordingStartTime.current = Date.now();
 
-      // Start timer
+      // Start timer with timestamp-based approach
+      console.log('Starting timer...');
       recordingTimer.current = setInterval(() => {
-        setRecordingDuration(prev => prev + 1);
+        if (recordingStartTime.current) {
+          const elapsed = Math.floor(
+            (Date.now() - recordingStartTime.current) / 1000,
+          );
+          console.log('Timer tick - elapsed seconds:', elapsed);
+          setRecordingDuration(elapsed);
+        }
       }, 1000);
+
+      // Start blinking animation
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(recordingDotAnim, {
+            toValue: 0.3,
+            duration: 500,
+            useNativeDriver: true,
+          }),
+          Animated.timing(recordingDotAnim, {
+            toValue: 1,
+            duration: 500,
+            useNativeDriver: true,
+          }),
+        ]),
+      ).start();
+
+      console.log('Recording started successfully');
     } catch (error) {
       console.error('Error starting recording:', error);
       Alert.alert('Lỗi', 'Không thể bắt đầu ghi âm. Hãy thử lại.');
@@ -225,31 +264,59 @@ const QuickCaptureModal = ({
   };
 
   const stopRecording = async () => {
+    console.log('stopRecording called');
     try {
+      console.log('Stopping AudioRecord...');
       const audioFile = await AudioRecord.stop();
+
+      console.log('Clearing recording state...');
       setIsRecording(false);
+
+      // Calculate final duration
+      const finalDuration = recordingStartTime.current
+        ? Math.floor((Date.now() - recordingStartTime.current) / 1000)
+        : recordingDuration;
+
       if (recordingTimer.current) {
         clearInterval(recordingTimer.current);
+        recordingTimer.current = null;
       }
 
+      recordingStartTime.current = null;
+
+      // Stop blinking animation
+      recordingDotAnim.stopAnimation();
+      recordingDotAnim.setValue(1);
+
       console.log('Audio file saved at:', audioFile);
+      console.log('Recording duration:', finalDuration, 'seconds');
 
       // Only add audio content if we're in voice mode
       if (captureMode === 'voice') {
-        // Process the audio file (for now, just show a placeholder with file info)
-        const transcription = `[Ghi âm ${Math.floor(recordingDuration / 60)}:${(
-          recordingDuration % 60
-        )
-          .toString()
-          .padStart(2, '0')} - File: ${audioFile}]`;
+        // Create richer content with audio metadata
+        const audioData = {
+          type: 'audio',
+          filePath: audioFile,
+          duration: finalDuration,
+          timestamp: new Date().toISOString(),
+        };
+
+        const transcription = `[🎤 Ghi âm ${formatDuration(
+          finalDuration,
+        )}]\nFile: ${audioFile}\nThời gian: ${new Date().toLocaleString(
+          'vi-VN',
+        )}`;
 
         setContent(prev => prev + (prev ? '\n\n' : '') + transcription);
+
+        // Store audio metadata for the note
+        console.log('Audio metadata:', audioData);
 
         Alert.alert(
           'Thành Công',
           `Đã ghi âm xong (${formatDuration(
-            recordingDuration,
-          )}). File đã được lưu tại: ${audioFile}\n\nBạn có thể chỉnh sửa nội dung trước khi lưu ghi chú.`,
+            finalDuration,
+          )}). \n\nFile: ${audioFile}\n\nBạn có thể chỉnh sửa nội dung trước khi lưu ghi chú.`,
         );
       }
     } catch (error) {
@@ -257,6 +324,7 @@ const QuickCaptureModal = ({
       setIsRecording(false);
       if (recordingTimer.current) {
         clearInterval(recordingTimer.current);
+        recordingTimer.current = null;
       }
       Alert.alert('Lỗi', 'Có lỗi khi dừng ghi âm.');
     }
@@ -290,6 +358,18 @@ const QuickCaptureModal = ({
         noteData.metadata = { noteType: 'checklist' };
       } else if (captureMode === 'text') {
         noteData.metadata = { noteType: 'text' };
+      } else if (captureMode === 'voice') {
+        // Extract audio file path from content if exists
+        const audioFileMatch = content.match(/File: (.+)/);
+        const audioFile = audioFileMatch ? audioFileMatch[1] : null;
+
+        noteData.metadata = {
+          noteType: 'voice',
+          audioFile: audioFile,
+          hasAudio: !!audioFile,
+        };
+
+        console.log('Saving voice note with metadata:', noteData.metadata);
       }
 
       await notesService.createNote(noteData);
@@ -521,13 +601,24 @@ const QuickCaptureModal = ({
           <Text style={styles.recordingDuration}>
             {formatDuration(recordingDuration)}
           </Text>
-          <Text style={styles.recordingStatus}>Đang ghi âm...</Text>
+          <View style={styles.recordingIndicator}>
+            <Animated.View
+              style={[styles.recordingDot, { opacity: recordingDotAnim }]}
+            />
+            <Text style={styles.recordingStatus}>Đang ghi âm...</Text>
+          </View>
         </View>
       )}
 
       <Text style={styles.voiceInstructions}>
         {isRecording ? 'Nhấn để dừng ghi âm' : 'Nhấn để bắt đầu ghi âm'}
       </Text>
+
+      {!hasPermission && (
+        <Text style={styles.permissionWarning}>
+          ⚠️ Cần cấp quyền microphone để ghi âm
+        </Text>
+      )}
     </View>
   );
 
@@ -932,6 +1023,17 @@ const styles = StyleSheet.create({
     color: NOTES_CONFIG.COLORS.ERROR,
     marginBottom: 4,
   },
+  recordingIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  recordingDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: NOTES_CONFIG.COLORS.ERROR,
+    marginRight: 6,
+  },
   recordingStatus: {
     fontSize: NOTES_CONFIG.TEXT_SIZES.SM,
     color: NOTES_CONFIG.COLORS.ERROR,
@@ -941,6 +1043,13 @@ const styles = StyleSheet.create({
     fontSize: NOTES_CONFIG.TEXT_SIZES.BASE,
     color: NOTES_CONFIG.COLORS.TEXT_SECONDARY,
     textAlign: 'center',
+    marginBottom: 8,
+  },
+  permissionWarning: {
+    fontSize: NOTES_CONFIG.TEXT_SIZES.SM,
+    color: '#FF6B35',
+    textAlign: 'center',
+    marginTop: 8,
   },
 });
 

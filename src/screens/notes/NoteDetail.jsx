@@ -25,6 +25,7 @@ import notesService from '../../services/notes/notesService';
 import { NOTES_CONFIG } from '../../config/notes/notesConfig';
 import { safeVibrate } from '../../utils/vibration';
 import ChecklistItem from '../../components/notes/ChecklistItem';
+import AudioPlayer from '../../components/audio/AudioPlayer';
 
 const { height } = Dimensions.get('window');
 
@@ -46,8 +47,9 @@ const NoteDetail = () => {
   const [newTag, setNewTag] = useState('');
   const [selectedText, setSelectedText] = useState('');
   const [showStats, setShowStats] = useState(false);
-  const [noteType, setNoteType] = useState('text'); // 'text' | 'checklist'
+  const [noteType, setNoteType] = useState('text'); // 'text' | 'checklist' | 'voice'
   const [checklistItems, setChecklistItems] = useState([]);
+  const [audioMetadata, setAudioMetadata] = useState(null); // For voice notes
 
   // Refs
   const titleInputRef = useRef(null);
@@ -88,6 +90,18 @@ const NoteDetail = () => {
     return () => StatusBar.setBarStyle('default');
   }, [loadData]);
 
+  // Helper functions
+  const extractDurationFromContent = contentText => {
+    // Extract duration from content like "[🎤 Ghi âm 1:23]"
+    const durationMatch = contentText.match(/🎤 Ghi âm (\d+):(\d+)/);
+    if (durationMatch) {
+      const minutes = parseInt(durationMatch[1], 10);
+      const seconds = parseInt(durationMatch[2], 10);
+      return minutes * 60 + seconds;
+    }
+    return 0;
+  };
+
   const loadNote = async () => {
     try {
       if (__DEV__) {
@@ -115,6 +129,15 @@ const NoteDetail = () => {
         // Parse checklist items if it's a checklist
         if (detectedNoteType === 'checklist') {
           parseChecklistItems(noteData.content || '');
+        }
+
+        // Load audio metadata if it's a voice note
+        if (detectedNoteType === 'voice' && noteData.metadata) {
+          setAudioMetadata({
+            audioFile: noteData.metadata.audioFile,
+            hasAudio: noteData.metadata.hasAudio,
+            duration: extractDurationFromContent(noteData.content || ''),
+          });
         }
 
         // Convert tags from object array to string array
@@ -731,7 +754,35 @@ const NoteDetail = () => {
           </Animated.View>
 
           {/* Content */}
-          {noteType === 'checklist' ? (
+          {noteType === 'voice' ? (
+            <View style={styles.voiceNoteContainer}>
+              {audioMetadata && audioMetadata.audioFile && (
+                <AudioPlayer
+                  filePath={audioMetadata.audioFile}
+                  duration={audioMetadata.duration}
+                />
+              )}
+              {/* Still show text content for voice notes */}
+              <TextInput
+                ref={contentInputRef}
+                style={[
+                  styles.contentInput,
+                  !isEditing && styles.contentReadonly,
+                  styles.voiceContentInput,
+                ]}
+                placeholder="Ghi chú bổ sung..."
+                placeholderTextColor={NOTES_CONFIG.COLORS.TEXT_SECONDARY}
+                value={content}
+                onChangeText={setContent}
+                editable={isEditing}
+                multiline
+                textAlignVertical="top"
+                onFocus={handleContentFocus}
+                onBlur={handleContentBlur}
+                onSelectionChange={handleSelectionChange}
+              />
+            </View>
+          ) : noteType === 'checklist' ? (
             <View style={styles.checklistContainer}>
               {checklistItems.length === 0 ? (
                 <View style={styles.emptyChecklist}>
@@ -1096,6 +1147,17 @@ const styles = StyleSheet.create({
     fontSize: NOTES_CONFIG.TEXT_SIZES.SM,
     color: NOTES_CONFIG.COLORS.TEXT_SECONDARY,
     textAlign: 'center',
+  },
+  voiceNoteContainer: {
+    gap: 16,
+  },
+  voiceContentInput: {
+    minHeight: 80,
+    backgroundColor: NOTES_CONFIG.COLORS.BACKGROUND,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: NOTES_CONFIG.COLORS.BORDER,
+    padding: 12,
   },
 });
 
