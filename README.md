@@ -246,12 +246,16 @@ You've successfully run and modified your React Native App. :partying_face:
 ## Common Issues
 
 ### React Native SQLite Storage jcenter() Error
+
 If you see `Could not find method jcenter()` error:
+
 - The postinstall script should fix this automatically
 - If not, run the manual fix command from step 3 in installation
 
 ### Metro Bundler Dependency Resolution
+
 If you see module resolution errors like `event-target-shim`:
+
 ```bash
 # Reset Metro cache
 npm run start:fresh
@@ -261,6 +265,7 @@ npm run clean
 ```
 
 ### Build Issues
+
 ```bash
 # Clean Android build
 cd android && ./gradlew clean && cd ..

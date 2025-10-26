@@ -63,7 +63,7 @@ sed -i.bak 's/jcenter()/mavenCentral()/g' node_modules/react-native-sqlite-stora
 ### Files Created for Automation
 
 - `scripts/fix-sqlite-build.js` - Node.js script (not working)
-- `scripts/fix-sqlite-build.bat` - Batch script (not working) 
+- `scripts/fix-sqlite-build.bat` - Batch script (not working)
 - `scripts/fix-sqlite-build.ps1` - PowerShell script (✅ WORKING)
 
 **Update**: PowerShell script now works reliably through postinstall hook.
@@ -73,18 +73,22 @@ sed -i.bak 's/jcenter()/mavenCentral()/g' node_modules/react-native-sqlite-stora
 ## Metro Bundler Dependency Resolution Issues
 
 ### Problem
+
 Sometimes Metro bundler fails to resolve dependencies with errors like:
+
 ```
 Error: While trying to resolve module `event-target-shim` from file...
 the package itself specifies a `main` module field that could not be resolved
 ```
 
 ### Root Cause
+
 - Metro cache corruption
 - Dependency resolution conflicts
 - Package.json main field without proper extensions
 
 ### Solutions
+
 1. **Reset Metro cache**: `npm run start:fresh`
 2. **Kill port and clean**: `npm run clean`
 3. **Manual cleanup**:
@@ -94,5 +98,6 @@ the package itself specifies a `main` module field that could not be resolved
    ```
 
 ### Prevention
+
 - Use `npm run start:fresh` instead of `npm start` when having issues
 - Clear cache after major dependency changes
