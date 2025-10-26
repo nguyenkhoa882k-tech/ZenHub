@@ -11,8 +11,10 @@ import {
   Alert,
   StyleSheet,
   ScrollView,
+  PermissionsAndroid,
 } from 'react-native';
 import Icon from '@react-native-vector-icons/ionicons';
+import AudioRecord from 'react-native-audio-record';
 import notesService from '../../services/notes/notesService';
 import { NOTES_CONFIG } from '../../config/notes/notesConfig';
 import ChecklistPreview from './ChecklistPreview';
@@ -32,6 +34,12 @@ const QuickCaptureModal = ({
   const [saving, setSaving] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
 
+  // Voice recording states
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingDuration, setRecordingDuration] = useState(0);
+  const [hasPermission, setHasPermission] = useState(false);
+  const recordingTimer = useRef(null);
+
   console.log('QuickCaptureModal initialData:', initialData);
   console.log('Initial selectedTags:', selectedTags);
 
@@ -49,6 +57,8 @@ const QuickCaptureModal = ({
       console.log('123');
 
       loadTags();
+      setupAudioRecord();
+      requestAudioPermission();
 
       // Auto focus title input
       setTimeout(() => {
@@ -60,6 +70,18 @@ const QuickCaptureModal = ({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (recordingTimer.current) {
+        clearInterval(recordingTimer.current);
+      }
+      if (isRecording) {
+        AudioRecord.stop().catch(console.error);
+      }
+    };
+  }, [isRecording]);
 
   const animateIn = () => {
     Animated.parallel([
@@ -117,6 +139,133 @@ const QuickCaptureModal = ({
     setNewTag('');
     setCaptureMode('text');
     setSaving(false);
+
+    // Reset recording state
+    setIsRecording(false);
+    setRecordingDuration(0);
+    if (recordingTimer.current) {
+      clearInterval(recordingTimer.current);
+      recordingTimer.current = null;
+    }
+
+    // Stop any ongoing recording
+    if (isRecording) {
+      AudioRecord.stop().catch(console.error);
+    }
+  };
+
+  // Audio recording functions
+  const requestAudioPermission = async () => {
+    if (Platform.OS === 'android') {
+      try {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
+          {
+            title: 'Quyền Ghi Âm',
+            message: 'Ứng dụng cần quyền ghi âm để tạo ghi chú bằng giọng nói.',
+            buttonNeutral: 'Hỏi Lại Sau',
+            buttonNegative: 'Hủy',
+            buttonPositive: 'Đồng Ý',
+          },
+        );
+        const permissionGranted =
+          granted === PermissionsAndroid.RESULTS.GRANTED;
+        setHasPermission(permissionGranted);
+        return permissionGranted;
+      } catch (err) {
+        console.warn(err);
+        return false;
+      }
+    }
+    return true; // iOS handles permissions automatically
+  };
+
+  const setupAudioRecord = () => {
+    const options = {
+      sampleRate: 16000,
+      channels: 1,
+      bitsPerSample: 16,
+      audioSource: 6, // VOICE_RECOGNITION
+      wavFile: 'voice_note.wav',
+    };
+    AudioRecord.init(options);
+  };
+
+  const startRecording = async () => {
+    const permission = await requestAudioPermission();
+    if (!permission) {
+      Alert.alert('Lỗi', 'Cần cấp quyền ghi âm để sử dụng tính năng này.');
+      return;
+    }
+
+    try {
+      setupAudioRecord();
+      AudioRecord.start();
+      setIsRecording(true);
+      setRecordingDuration(0);
+
+      // Start timer
+      recordingTimer.current = setInterval(() => {
+        setRecordingDuration(prev => prev + 1);
+      }, 1000);
+    } catch (error) {
+      console.error('Error starting recording:', error);
+      Alert.alert('Lỗi', 'Không thể bắt đầu ghi âm. Hãy thử lại.');
+
+      // Fallback - show input for manual entry
+      Alert.alert(
+        'Ghi âm thủ công',
+        'Bạn có muốn nhập nội dung thủ công thay vì ghi âm không?',
+        [
+          { text: 'Hủy', style: 'cancel' },
+          { text: 'Nhập thủ công', onPress: () => setCaptureMode('text') },
+        ],
+      );
+    }
+  };
+
+  const stopRecording = async () => {
+    try {
+      const audioFile = await AudioRecord.stop();
+      setIsRecording(false);
+      if (recordingTimer.current) {
+        clearInterval(recordingTimer.current);
+      }
+
+      console.log('Audio file saved at:', audioFile);
+
+      // Only add audio content if we're in voice mode
+      if (captureMode === 'voice') {
+        // Process the audio file (for now, just show a placeholder with file info)
+        const transcription = `[Ghi âm ${Math.floor(recordingDuration / 60)}:${(
+          recordingDuration % 60
+        )
+          .toString()
+          .padStart(2, '0')} - File: ${audioFile}]`;
+
+        setContent(prev => prev + (prev ? '\n\n' : '') + transcription);
+
+        Alert.alert(
+          'Thành Công',
+          `Đã ghi âm xong (${formatDuration(
+            recordingDuration,
+          )}). File đã được lưu tại: ${audioFile}\n\nBạn có thể chỉnh sửa nội dung trước khi lưu ghi chú.`,
+        );
+      }
+    } catch (error) {
+      console.error('Error stopping recording:', error);
+      setIsRecording(false);
+      if (recordingTimer.current) {
+        clearInterval(recordingTimer.current);
+      }
+      Alert.alert('Lỗi', 'Có lỗi khi dừng ghi âm.');
+    }
+  };
+
+  const formatDuration = seconds => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
   const handleSave = async () => {
@@ -210,6 +359,28 @@ const QuickCaptureModal = ({
     }
   };
 
+  const handleCaptureModeChange = async newMode => {
+    // If currently recording, stop it first
+    if (isRecording && captureMode === 'voice') {
+      Alert.alert(
+        'Đang ghi âm',
+        'Bạn có muốn dừng ghi âm hiện tại và chuyển sang chế độ khác?',
+        [
+          { text: 'Hủy', style: 'cancel' },
+          {
+            text: 'Dừng và chuyển',
+            onPress: async () => {
+              await stopRecording();
+              setCaptureMode(newMode);
+            },
+          },
+        ],
+      );
+    } else {
+      setCaptureMode(newMode);
+    }
+  };
+
   const renderCaptureMode = () => {
     const modes = [
       { key: 'text', label: 'Văn Bản', icon: 'document-text-outline' },
@@ -226,7 +397,7 @@ const QuickCaptureModal = ({
               styles.captureModeButton,
               captureMode === mode.key && styles.captureModeButtonActive,
             ]}
-            onPress={() => setCaptureMode(mode.key)}
+            onPress={() => handleCaptureModeChange(mode.key)}
           >
             <Icon
               name={mode.icon}
@@ -337,10 +508,26 @@ const QuickCaptureModal = ({
 
   const renderVoiceCapture = () => (
     <View style={styles.voiceCaptureContainer}>
-      <TouchableOpacity style={styles.voiceButton}>
-        <Icon name="mic" size={32} color="#FFFFFF" />
+      <TouchableOpacity
+        style={[styles.voiceButton, isRecording && styles.voiceButtonRecording]}
+        onPress={isRecording ? stopRecording : startRecording}
+        disabled={saving}
+      >
+        <Icon name={isRecording ? 'stop' : 'mic'} size={32} color="#FFFFFF" />
       </TouchableOpacity>
-      <Text style={styles.voiceInstructions}>Nhấn và giữ để ghi âm</Text>
+
+      {isRecording && (
+        <View style={styles.recordingInfo}>
+          <Text style={styles.recordingDuration}>
+            {formatDuration(recordingDuration)}
+          </Text>
+          <Text style={styles.recordingStatus}>Đang ghi âm...</Text>
+        </View>
+      )}
+
+      <Text style={styles.voiceInstructions}>
+        {isRecording ? 'Nhấn để dừng ghi âm' : 'Nhấn để bắt đầu ghi âm'}
+      </Text>
     </View>
   );
 
@@ -730,6 +917,25 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
+  },
+  voiceButtonRecording: {
+    backgroundColor: '#FF3030',
+    transform: [{ scale: 1.1 }],
+  },
+  recordingInfo: {
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  recordingDuration: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: NOTES_CONFIG.COLORS.ERROR,
+    marginBottom: 4,
+  },
+  recordingStatus: {
+    fontSize: NOTES_CONFIG.TEXT_SIZES.SM,
+    color: NOTES_CONFIG.COLORS.ERROR,
+    fontWeight: '500',
   },
   voiceInstructions: {
     fontSize: NOTES_CONFIG.TEXT_SIZES.BASE,
