@@ -15,6 +15,7 @@ import {
 import Icon from '@react-native-vector-icons/ionicons';
 import notesService from '../../services/notes/notesService';
 import { NOTES_CONFIG } from '../../config/notes/notesConfig';
+import ChecklistPreview from './ChecklistPreview';
 
 const QuickCaptureModal = ({
   visible,
@@ -29,6 +30,7 @@ const QuickCaptureModal = ({
   const [newTag, setNewTag] = useState('');
   const [captureMode, setCaptureMode] = useState('text'); // 'text' | 'voice' | 'checklist'
   const [saving, setSaving] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
 
   console.log('QuickCaptureModal initialData:', initialData);
   console.log('Initial selectedTags:', selectedTags);
@@ -56,6 +58,7 @@ const QuickCaptureModal = ({
       animateOut();
       resetForm();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
 
   const animateIn = () => {
@@ -134,6 +137,10 @@ const QuickCaptureModal = ({
       // Add template-specific data based on capture mode
       if (captureMode === 'checklist') {
         noteData.content = convertToChecklist(noteData.content);
+        // Store note type in metadata for future reference
+        noteData.metadata = { noteType: 'checklist' };
+      } else if (captureMode === 'text') {
+        noteData.metadata = { noteType: 'text' };
       }
 
       await notesService.createNote(noteData);
@@ -156,12 +163,25 @@ const QuickCaptureModal = ({
 
     const lines = text.split('\n');
     return lines
-      .filter(line => line.trim())
-      .map(line =>
-        line.startsWith('- [ ]') || line.startsWith('- [x]')
-          ? line
-          : `- [ ] ${line.trim()}`,
-      )
+      .filter(line => line.trim() || line === '') // Keep empty lines for formatting
+      .map(line => {
+        if (!line.trim()) return ''; // Preserve empty lines
+
+        // Check if already in checklist format
+        if (line.match(/^\s*- \[[ x]\]/)) {
+          return line;
+        }
+
+        // Check if line starts with bullet or checkbox patterns
+        if (line.match(/^\s*[-*•]/)) {
+          // Remove existing bullet and add checklist format
+          const lineContent = line.replace(/^\s*[-*•]\s*/, '').trim();
+          return `- [ ] ${lineContent}`;
+        }
+
+        // Regular line - convert to checklist format
+        return `- [ ] ${line.trim()}`;
+      })
       .join('\n');
   };
 
@@ -415,24 +435,55 @@ const QuickCaptureModal = ({
 
                   {/* Content input */}
                   <View style={styles.inputSection}>
-                    <TextInput
-                      ref={contentInputRef}
-                      style={[
-                        styles.contentInput,
-                        captureMode === 'checklist' && styles.checklistInput,
-                      ]}
-                      placeholder={
-                        captureMode === 'checklist'
-                          ? 'Nhập danh sách việc cần làm...\nMỗi dòng sẽ thành một mục'
-                          : 'Nội dung ghi chú...'
-                      }
-                      placeholderTextColor={NOTES_CONFIG.COLORS.TEXT_SECONDARY}
-                      value={content}
-                      onChangeText={setContent}
-                      multiline
-                      textAlignVertical="top"
-                      maxLength={1000}
-                    />
+                    <View style={styles.contentHeader}>
+                      <Text style={styles.contentLabel}>
+                        {captureMode === 'checklist'
+                          ? 'Danh sách việc cần làm'
+                          : 'Nội dung ghi chú'}
+                      </Text>
+                      {captureMode === 'checklist' && content.trim() && (
+                        <TouchableOpacity
+                          style={styles.previewToggle}
+                          onPress={() => setShowPreview(!showPreview)}
+                        >
+                          <Icon
+                            name={
+                              showPreview ? 'eye-off-outline' : 'eye-outline'
+                            }
+                            size={16}
+                            color={NOTES_CONFIG.COLORS.PRIMARY}
+                          />
+                          <Text style={styles.previewToggleText}>
+                            {showPreview ? 'Ẩn' : 'Xem'} preview
+                          </Text>
+                        </TouchableOpacity>
+                      )}
+                    </View>
+
+                    {captureMode === 'checklist' && showPreview ? (
+                      <ChecklistPreview content={content} />
+                    ) : (
+                      <TextInput
+                        ref={contentInputRef}
+                        style={[
+                          styles.contentInput,
+                          captureMode === 'checklist' && styles.checklistInput,
+                        ]}
+                        placeholder={
+                          captureMode === 'checklist'
+                            ? 'Nhập danh sách việc cần làm...\nMỗi dòng sẽ thành một mục\n\nVí dụ:\n- [ ] Việc cần làm 1\n- [ ] Việc cần làm 2\n- [x] Việc đã hoàn thành'
+                            : 'Nội dung ghi chú...'
+                        }
+                        placeholderTextColor={
+                          NOTES_CONFIG.COLORS.TEXT_SECONDARY
+                        }
+                        value={content}
+                        onChangeText={setContent}
+                        multiline
+                        textAlignVertical="top"
+                        maxLength={1000}
+                      />
+                    )}
                   </View>
 
                   {/* Tag section */}
@@ -461,7 +512,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: NOTES_CONFIG.UI.MODAL_BORDER_RADIUS,
     borderTopRightRadius: NOTES_CONFIG.UI.MODAL_BORDER_RADIUS,
     maxHeight: '95%',
-    minHeight: '70%',
+    minHeight: '85%',
     flex: 0,
   },
   keyboardAvoid: {
@@ -559,6 +610,33 @@ const styles = StyleSheet.create({
   },
   checklistInput: {
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+  },
+  contentHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  contentLabel: {
+    fontSize: NOTES_CONFIG.TEXT_SIZES.SM,
+    fontWeight: '600',
+    color: NOTES_CONFIG.COLORS.TEXT_SECONDARY,
+  },
+  previewToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    backgroundColor: NOTES_CONFIG.COLORS.BACKGROUND,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: NOTES_CONFIG.COLORS.PRIMARY,
+  },
+  previewToggleText: {
+    fontSize: NOTES_CONFIG.TEXT_SIZES.XS,
+    color: NOTES_CONFIG.COLORS.PRIMARY,
+    fontWeight: '500',
+    marginLeft: 4,
   },
   tagSection: {
     paddingHorizontal: 20,

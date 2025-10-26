@@ -71,6 +71,31 @@ const NoteCard = ({
   const getContentPreview = content => {
     if (!content) return 'Không có nội dung...';
 
+    // Check if it's a checklist
+    const isChecklist = /^\s*- \[[ x]\]/m.test(content);
+
+    if (isChecklist) {
+      const lines = content.split('\n');
+      const checklistItems = lines
+        .filter(line => line.trim().match(/^\s*- \[[ x]\]/))
+        .slice(0, viewMode === 'grid' ? 2 : 3);
+
+      const completedCount = checklistItems.filter(item =>
+        item.includes('[x]'),
+      ).length;
+      const totalCount = lines.filter(line =>
+        line.trim().match(/^\s*- \[[ x]\]/),
+      ).length;
+
+      const itemsText = checklistItems
+        .map(item => item.replace(/^\s*- \[[ x]\]\s*/, ''))
+        .join(', ');
+
+      return `${itemsText}${
+        totalCount > checklistItems.length ? '...' : ''
+      } (${completedCount}/${totalCount})`;
+    }
+
     // Remove markdown syntax for preview
     const cleaned = content
       .replace(/#+\s/g, '')
@@ -83,6 +108,37 @@ const NoteCard = ({
     return cleaned.length > (viewMode === 'grid' ? 80 : 120)
       ? cleaned.substring(0, viewMode === 'grid' ? 80 : 120) + '...'
       : cleaned;
+  };
+
+  const isChecklist = content => {
+    return content && /^\s*- \[[ x]\]/m.test(content);
+  };
+
+  const getChecklistPreview = content => {
+    if (!isChecklist(content)) return [];
+
+    const lines = content.split('\n');
+    return lines
+      .filter(line => line.trim().match(/^\s*- \[[ x]\]/))
+      .slice(0, viewMode === 'grid' ? 2 : 3)
+      .map(line => ({
+        text: line.replace(/^\s*- \[[ x]\]\s*/, ''),
+        completed: line.includes('[x]'),
+      }));
+  };
+
+  const getChecklistStats = content => {
+    if (!isChecklist(content)) return { completed: 0, total: 0 };
+
+    const lines = content.split('\n');
+    const checklistLines = lines.filter(line =>
+      line.trim().match(/^\s*- \[[ x]\]/),
+    );
+    const completed = checklistLines.filter(line =>
+      line.includes('[x]'),
+    ).length;
+
+    return { completed, total: checklistLines.length };
   };
 
   const renderTags = () => {
@@ -233,12 +289,50 @@ const NoteCard = ({
           </View>
 
           {/* Content preview */}
-          <Text
-            style={[styles.content, viewMode === 'grid' && styles.gridContent]}
-            numberOfLines={viewMode === 'grid' ? 3 : 2}
-          >
-            {getContentPreview(note.content)}
-          </Text>
+          <View style={styles.contentContainer}>
+            {isChecklist(note.content) ? (
+              <View style={styles.checklistPreview}>
+                {getChecklistPreview(note.content).map((item, index) => (
+                  <View key={index} style={styles.checklistItem}>
+                    <View
+                      style={[
+                        styles.checklistCheckbox,
+                        item.completed && styles.checklistCheckboxCompleted,
+                      ]}
+                    >
+                      {item.completed && (
+                        <Icon name="checkmark" size={8} color="#FFFFFF" />
+                      )}
+                    </View>
+                    <Text
+                      style={[
+                        styles.checklistText,
+                        item.completed && styles.checklistTextCompleted,
+                      ]}
+                      numberOfLines={1}
+                    >
+                      {item.text}
+                    </Text>
+                  </View>
+                ))}
+                {getChecklistStats(note.content).total > 3 && (
+                  <Text style={styles.checklistMore}>
+                    +{getChecklistStats(note.content).total - 3} mục khác
+                  </Text>
+                )}
+              </View>
+            ) : (
+              <Text
+                style={[
+                  styles.content,
+                  viewMode === 'grid' && styles.gridContent,
+                ]}
+                numberOfLines={viewMode === 'grid' ? 3 : 2}
+              >
+                {getContentPreview(note.content)}
+              </Text>
+            )}
+          </View>
 
           {/* Tags */}
           {renderTags()}
@@ -435,6 +529,47 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingLeft: 8,
+  },
+  contentContainer: {
+    marginBottom: 12,
+  },
+  checklistPreview: {
+    gap: 4,
+  },
+  checklistItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  checklistCheckbox: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    borderWidth: 1,
+    borderColor: NOTES_CONFIG.COLORS.PRIMARY,
+    backgroundColor: NOTES_CONFIG.COLORS.SURFACE,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 8,
+  },
+  checklistCheckboxCompleted: {
+    backgroundColor: NOTES_CONFIG.COLORS.SUCCESS,
+    borderColor: NOTES_CONFIG.COLORS.SUCCESS,
+  },
+  checklistText: {
+    flex: 1,
+    fontSize: NOTES_CONFIG.TEXT_SIZES.SM,
+    color: NOTES_CONFIG.COLORS.TEXT_PRIMARY,
+    lineHeight: 16,
+  },
+  checklistTextCompleted: {
+    textDecorationLine: 'line-through',
+    color: NOTES_CONFIG.COLORS.TEXT_SECONDARY,
+  },
+  checklistMore: {
+    fontSize: NOTES_CONFIG.TEXT_SIZES.XS,
+    color: NOTES_CONFIG.COLORS.TEXT_SECONDARY,
+    fontStyle: 'italic',
+    marginTop: 2,
   },
 });
 

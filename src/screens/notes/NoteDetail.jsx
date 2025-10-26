@@ -23,8 +23,8 @@ import {
 import Icon from '@react-native-vector-icons/ionicons';
 import notesService from '../../services/notes/notesService';
 import { NOTES_CONFIG } from '../../config/notes/notesConfig';
-import { getSafeHeaderPadding } from '../../utils/statusBar';
 import { safeVibrate } from '../../utils/vibration';
+import ChecklistItem from '../../components/notes/ChecklistItem';
 
 const { height } = Dimensions.get('window');
 
@@ -46,6 +46,8 @@ const NoteDetail = () => {
   const [newTag, setNewTag] = useState('');
   const [selectedText, setSelectedText] = useState('');
   const [showStats, setShowStats] = useState(false);
+  const [noteType, setNoteType] = useState('text'); // 'text' | 'checklist'
+  const [checklistItems, setChecklistItems] = useState([]);
 
   // Refs
   const titleInputRef = useRef(null);
@@ -97,6 +99,24 @@ const NoteDetail = () => {
         setTitle(noteData.title || '');
         setContent(noteData.content || '');
 
+        // Detect note type from metadata or content pattern
+        let detectedNoteType = 'text';
+        if (noteData.metadata && noteData.metadata.noteType) {
+          detectedNoteType = noteData.metadata.noteType;
+        } else if (noteData.content) {
+          // Detect checklist pattern: lines starting with - [ ] or - [x]
+          const hasChecklistPattern = /^\s*- \[[ x]\]/m.test(noteData.content);
+          if (hasChecklistPattern) {
+            detectedNoteType = 'checklist';
+          }
+        }
+        setNoteType(detectedNoteType);
+
+        // Parse checklist items if it's a checklist
+        if (detectedNoteType === 'checklist') {
+          parseChecklistItems(noteData.content || '');
+        }
+
         // Convert tags from object array to string array
         const parsedTags = Array.isArray(noteData.tags)
           ? noteData.tags.map(tag =>
@@ -129,6 +149,84 @@ const NoteDetail = () => {
     } catch (error) {
       console.error('Error loading tags:', error);
     }
+  };
+
+  // Checklist management functions
+  const parseChecklistItems = contentText => {
+    if (!contentText) {
+      setChecklistItems([]);
+      return;
+    }
+
+    const lines = contentText.split('\n');
+    const items = [];
+    let itemId = 0;
+
+    lines.forEach(line => {
+      const trimmed = line.trim();
+      if (!trimmed) return;
+
+      const isCompleted = trimmed.startsWith('- [x]');
+      const isChecklist = trimmed.startsWith('- [ ]') || isCompleted;
+
+      if (isChecklist) {
+        const text = trimmed.replace(/^- \[[ x]\]\s*/, '');
+        items.push({
+          id: itemId++,
+          text: text || 'Mục trống',
+          completed: isCompleted,
+        });
+      } else {
+        // Convert regular line to checklist item
+        items.push({
+          id: itemId++,
+          text: trimmed,
+          completed: false,
+        });
+      }
+    });
+
+    setChecklistItems(items);
+  };
+
+  const updateChecklistContent = () => {
+    const checklistContent = checklistItems
+      .map(item => `- [${item.completed ? 'x' : ' '}] ${item.text}`)
+      .join('\n');
+    setContent(checklistContent);
+  };
+
+  const handleToggleChecklistItem = itemId => {
+    const updatedItems = checklistItems.map(item =>
+      item.id === itemId ? { ...item, completed: !item.completed } : item,
+    );
+    setChecklistItems(updatedItems);
+    updateChecklistContent();
+  };
+
+  const handleEditChecklistItem = (itemId, newText) => {
+    const updatedItems = checklistItems.map(item =>
+      item.id === itemId ? { ...item, text: newText } : item,
+    );
+    setChecklistItems(updatedItems);
+    updateChecklistContent();
+  };
+
+  const handleDeleteChecklistItem = itemId => {
+    const updatedItems = checklistItems.filter(item => item.id !== itemId);
+    setChecklistItems(updatedItems);
+    updateChecklistContent();
+  };
+
+  const handleAddChecklistItem = () => {
+    const newItem = {
+      id: Math.max(...checklistItems.map(item => item.id), -1) + 1,
+      text: 'Mục mới',
+      completed: false,
+    };
+    const updatedItems = [...checklistItems, newItem];
+    setChecklistItems(updatedItems);
+    updateChecklistContent();
   };
 
   // Animations
@@ -265,6 +363,8 @@ const NoteDetail = () => {
         content: content.trim(),
         tags: tags.filter(tag => typeof tag === 'string' && tag.trim()), // Ensure only valid strings
         updatedAt: new Date().toISOString(),
+        // Preserve note type in metadata
+        metadata: { noteType },
       };
 
       console.log('Saving note with data:', noteData);
@@ -631,20 +731,58 @@ const NoteDetail = () => {
           </Animated.View>
 
           {/* Content */}
-          <TextInput
-            ref={contentInputRef}
-            style={[styles.contentInput, !isEditing && styles.contentReadonly]}
-            placeholder="Viết ghi chú của bạn ở đây..."
-            placeholderTextColor={NOTES_CONFIG.COLORS.TEXT_SECONDARY}
-            value={content}
-            onChangeText={setContent}
-            editable={isEditing}
-            multiline
-            textAlignVertical="top"
-            onFocus={handleContentFocus}
-            onBlur={handleContentBlur}
-            onSelectionChange={handleSelectionChange}
-          />
+          {noteType === 'checklist' ? (
+            <View style={styles.checklistContainer}>
+              {checklistItems.length === 0 ? (
+                <View style={styles.emptyChecklist}>
+                  <Icon
+                    name="checkbox-outline"
+                    size={48}
+                    color={NOTES_CONFIG.COLORS.TEXT_SECONDARY}
+                  />
+                  <Text style={styles.emptyChecklistText}>
+                    Chưa có mục nào trong danh sách
+                  </Text>
+                  <Text style={styles.emptyChecklistSubtext}>
+                    Nhấn nút + để thêm mục mới
+                  </Text>
+                </View>
+              ) : (
+                checklistItems.map((item, index) => (
+                  <ChecklistItem
+                    key={item.id}
+                    item={item}
+                    index={index}
+                    isEditing={isEditing}
+                    isLast={index === checklistItems.length - 1}
+                    onToggle={handleToggleChecklistItem}
+                    onEdit={handleEditChecklistItem}
+                    onDelete={handleDeleteChecklistItem}
+                    onAddNew={handleAddChecklistItem}
+                    style={styles.checklistItem}
+                  />
+                ))
+              )}
+            </View>
+          ) : (
+            <TextInput
+              ref={contentInputRef}
+              style={[
+                styles.contentInput,
+                !isEditing && styles.contentReadonly,
+              ]}
+              placeholder="Viết ghi chú của bạn ở đây..."
+              placeholderTextColor={NOTES_CONFIG.COLORS.TEXT_SECONDARY}
+              value={content}
+              onChangeText={setContent}
+              editable={isEditing}
+              multiline
+              textAlignVertical="top"
+              onFocus={handleContentFocus}
+              onBlur={handleContentBlur}
+              onSelectionChange={handleSelectionChange}
+            />
+          )}
         </ScrollView>
       </Animated.View>
 
@@ -931,6 +1069,33 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
+  },
+  checklistContainer: {
+    marginBottom: 20,
+  },
+  checklistItem: {
+    marginBottom: 12,
+  },
+  emptyChecklist: {
+    alignItems: 'center',
+    paddingVertical: 40,
+    backgroundColor: NOTES_CONFIG.COLORS.BACKGROUND,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: NOTES_CONFIG.COLORS.BORDER,
+    borderStyle: 'dashed',
+  },
+  emptyChecklistText: {
+    fontSize: NOTES_CONFIG.TEXT_SIZES.LG,
+    fontWeight: '600',
+    color: NOTES_CONFIG.COLORS.TEXT_SECONDARY,
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  emptyChecklistSubtext: {
+    fontSize: NOTES_CONFIG.TEXT_SIZES.SM,
+    color: NOTES_CONFIG.COLORS.TEXT_SECONDARY,
+    textAlign: 'center',
   },
 });
 
