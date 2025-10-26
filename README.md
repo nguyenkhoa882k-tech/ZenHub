@@ -52,7 +52,21 @@ A React Native all-in-one utility & fun hub app featuring notes, quotes, weather
    npm install
    ```
 
-3. **Configure environment variables**
+3. **⚠️ CRITICAL: Fix react-native-sqlite-storage**
+
+   Due to the deprecated `jcenter()` repository, you must run this fix after every `npm install`:
+
+   **Windows PowerShell:**
+   ```powershell
+   (Get-Content 'node_modules\react-native-sqlite-storage\platforms\android\build.gradle') -replace 'jcenter\(\)', 'mavenCentral()' | Set-Content 'node_modules\react-native-sqlite-storage\platforms\android\build.gradle'
+   ```
+
+   **macOS/Linux:**
+   ```bash
+   sed -i.bak 's/jcenter()/mavenCentral()/g' node_modules/react-native-sqlite-storage/platforms/android/build.gradle
+   ```
+
+4. **Configure environment variables**
 
    Edit the `.env` file in the project root and replace placeholder values:
 
@@ -68,7 +82,7 @@ A React Native all-in-one utility & fun hub app featuring notes, quotes, weather
    # ... more ad unit IDs
    ```
 
-4. **iOS setup** (iOS only)
+5. **iOS setup** (iOS only)
    ```bash
    cd ios && pod install && cd ..
    ```
