@@ -15,9 +15,6 @@ import {
   fetchQuestions,
   getUserStats,
   updateUserStats,
-  getDailyProgress,
-  updateDailyProgress,
-  getMotivationalMessage,
   clearDailyProgress,
   addAskedQuestion,
   QUESTION_CATEGORIES,
@@ -374,6 +371,7 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
+    marginTop: 12,
   },
   header: {
     padding: 20,

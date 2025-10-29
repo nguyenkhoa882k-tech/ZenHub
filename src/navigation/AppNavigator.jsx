@@ -8,7 +8,6 @@ import HomeScreen from '../screens/HomeScreen';
 import NotesScreen from '../screens/NotesScreen';
 import NoteDetailScreen from '../screens/notes/NoteDetail';
 import QuotesScreen from '../screens/QuotesScreen';
-import WeatherScreen from '../screens/WeatherScreen';
 import WallpaperScreen from '../screens/WallpaperScreen';
 import NewsScreen from '../screens/NewsScreen';
 import DictionaryScreen from '../screens/DictionaryScreen';
@@ -50,8 +49,6 @@ const AppNavigator = () => {
         <Stack.Screen name="NoteDetail" component={NoteDetailScreen} />
 
         <Stack.Screen name={MODULES.QUOTES} component={QuotesScreen} />
-
-        <Stack.Screen name={MODULES.WEATHER} component={WeatherScreen} />
 
         <Stack.Screen name={MODULES.WALLPAPER} component={WallpaperScreen} />
 

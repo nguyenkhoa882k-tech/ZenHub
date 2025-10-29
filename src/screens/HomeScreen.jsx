@@ -104,14 +104,6 @@ const HomeScreen = () => {
       iconGradient: ['#4facfe', '#00f2fe'],
     },
     {
-      id: MODULES.WEATHER,
-      title: 'Thời Tiết',
-      icon: 'partly-sunny-outline',
-      description: 'Tình trạng hiện tại',
-      bgColor: '#43e97b',
-      iconGradient: ['#43e97b', '#38f9d7'],
-    },
-    {
       id: MODULES.WALLPAPER,
       title: 'Hình Nền',
       icon: 'image-outline',

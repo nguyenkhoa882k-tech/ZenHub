@@ -1,6 +1,6 @@
 # ZenHub – Notes, Focus & Fun
 
-A React Native all-in-one utility & fun hub app featuring notes, quotes, weather, wallpapers, news, dictionary, and math game modules.
+A React Native all-in-one utility & fun hub app featuring notes, quotes, wallpapers, news, dictionary, and math game modules.
 
 ## ✨ Features
 
@@ -8,7 +8,6 @@ A React Native all-in-one utility & fun hub app featuring notes, quotes, weather
 
 - 🗒️ **Notes & To-Do** - CRUD operations with offline storage, tags, search, and export
 - 💬 **Quotes** - Daily inspirational quotes (Coming Soon)
-- ☀️ **Weather** - Current conditions and forecasts (Coming Soon)
 - 🖼️ **Wallpapers** - Browse and download beautiful images (Coming Soon)
 - 📰 **News** - Latest articles by category (Coming Soon)
 - 📚 **Dictionary** - Word definitions and favorites (Coming Soon)
@@ -74,7 +73,6 @@ A React Native all-in-one utility & fun hub app featuring notes, quotes, weather
 
    ```env
    # API Keys (replace with your actual keys)
-   WEATHER_API_KEY=your_openweather_api_key
    NEWS_API_KEY=your_news_api_key
    WALLPAPER_API_KEY=your_unsplash_access_key
 
@@ -138,19 +136,13 @@ src/
 
 ### API Keys Required
 
-1. **OpenWeatherMap** (Weather module)
-
-   - Sign up at https://openweathermap.org/api
-   - Get your free API key
-   - Add to `.env` as `WEATHER_API_KEY`
-
-2. **News API** (News module)
+1. **News API** (News module)
 
    - Sign up at https://newsapi.org
    - Get your free API key
    - Add to `.env` as `NEWS_API_KEY`
 
-3. **Unsplash** (Wallpapers module)
+2. **Unsplash** (Wallpapers module)
    - Sign up at https://unsplash.com/developers
    - Create an app and get access key
    - Add to `.env` as `WALLPAPER_API_KEY`
@@ -167,7 +159,6 @@ src/
 - ✅ **Home Module** - Complete
 - ✅ **Notes & To-Do** - Complete with CRUD, tags, search
 - 🚧 **Quotes** - API integration pending
-- 🚧 **Weather** - API integration pending
 - 🚧 **Wallpapers** - API integration pending
 - 🚧 **News** - API integration pending
 - 🚧 **Dictionary** - API integration pending

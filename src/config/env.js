@@ -8,12 +8,10 @@
 export const env = {
   // API Configuration
   QUOTES_API_URL: 'https://api.quotable.io',
-  WEATHER_API_KEY: 'YOUR_WEATHER_API_KEY_HERE',
-  WEATHER_API_URL: 'https://api.openweathermap.org/data/2.5',
   NEWS_API_KEY: 'YOUR_NEWS_API_KEY_HERE',
   NEWS_API_URL: 'https://newsapi.org/v2',
   DICTIONARY_API_URL: 'https://api.dictionaryapi.dev/api/v2/entries/en',
-  WALLPAPER_API_KEY: 'YOUR_UNSPLASH_ACCESS_KEY_HERE',
+  WALLPAPER_API_KEY: 'unsplash_demo_key_replace_with_your_key',
   WALLPAPER_API_URL: 'https://api.unsplash.com',
 
   // AdMob Configuration (Test IDs for development)
@@ -29,7 +27,6 @@ export const env = {
   VERSION: '1.0.0',
 
   // Cache Duration (milliseconds)
-  WEATHER_CACHE_DURATION: 600000,
   QUOTES_CACHE_DURATION: 86400000,
   NEWS_CACHE_DURATION: 1800000,
 
