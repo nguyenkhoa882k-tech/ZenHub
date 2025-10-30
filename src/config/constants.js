@@ -3,7 +3,7 @@ export const MODULES = {
   HOME: 'Home',
   NOTES: 'Notes',
   QUOTES: 'Quotes',
-  WALLPAPER: 'Wallpaper',
+  COUNTRIES: 'Countries',
   NEWS: 'News',
   DICTIONARY: 'Dictionary',
   MATH_GAME: 'MathGame',
@@ -12,6 +12,8 @@ export const MODULES = {
 export const STORAGE_KEYS = {
   NOTES: '@zenhub_notes',
   QUOTES_CACHE: '@zenhub_quotes_cache',
+  COUNTRIES_CACHE: '@zenhub_countries_cache',
+  COUNTRIES_FAVORITES: '@zenhub_countries_favorites',
   NEWS_CACHE: '@zenhub_news_cache',
   DICTIONARY_FAVORITES: '@zenhub_dictionary_favorites',
   MATH_GAME_SCORES: '@zenhub_math_game_scores',
@@ -28,6 +30,22 @@ export const NEWS_CATEGORIES = [
   'science',
   'sports',
   'technology',
+];
+
+export const COUNTRY_REGIONS = [
+  'All',
+  'Africa',
+  'Americas',
+  'Asia',
+  'Europe',
+  'Oceania',
+];
+
+export const COUNTRY_SORT_OPTIONS = [
+  { key: 'name', label: 'Name A-Z' },
+  { key: 'population', label: 'Population' },
+  { key: 'area', label: 'Area' },
+  { key: 'region', label: 'Region' },
 ];
 
 export const MATH_GAME_LEVELS = {

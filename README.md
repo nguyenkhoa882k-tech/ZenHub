@@ -1,6 +1,6 @@
 # ZenHub – Notes, Focus & Fun
 
-A React Native all-in-one utility & fun hub app featuring notes, quotes, wallpapers, news, dictionary, and math game modules.
+A React Native all-in-one utility & fun hub app featuring notes, quotes, news, dictionary, and math game modules.
 
 ## ✨ Features
 
@@ -8,7 +8,6 @@ A React Native all-in-one utility & fun hub app featuring notes, quotes, wallpap
 
 - 🗒️ **Notes & To-Do** - CRUD operations with offline storage, tags, search, and export
 - 💬 **Quotes** - Daily inspirational quotes (Coming Soon)
-- 🖼️ **Wallpapers** - Browse and download beautiful images (Coming Soon)
 - 📰 **News** - Latest articles by category (Coming Soon)
 - 📚 **Dictionary** - Word definitions and favorites (Coming Soon)
 - 🧮 **Math Game** - Progressive difficulty brain training (Coming Soon)
@@ -74,7 +73,6 @@ A React Native all-in-one utility & fun hub app featuring notes, quotes, wallpap
    ```env
    # API Keys (replace with your actual keys)
    NEWS_API_KEY=your_news_api_key
-   WALLPAPER_API_KEY=your_unsplash_access_key
 
    # AdMob IDs (replace with your production ad unit IDs)
    ADMOB_BANNER_ANDROID=your_banner_ad_unit_id
@@ -142,11 +140,6 @@ src/
    - Get your free API key
    - Add to `.env` as `NEWS_API_KEY`
 
-2. **Unsplash** (Wallpapers module)
-   - Sign up at https://unsplash.com/developers
-   - Create an app and get access key
-   - Add to `.env` as `WALLPAPER_API_KEY`
-
 ### AdMob Setup
 
 1. **Create AdMob account** at https://admob.google.com
@@ -159,7 +152,6 @@ src/
 - ✅ **Home Module** - Complete
 - ✅ **Notes & To-Do** - Complete with CRUD, tags, search
 - 🚧 **Quotes** - API integration pending
-- 🚧 **Wallpapers** - API integration pending
 - 🚧 **News** - API integration pending
 - 🚧 **Dictionary** - API integration pending
 - 🚧 **Math Game** - Game logic pending

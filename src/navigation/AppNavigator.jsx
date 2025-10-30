@@ -8,10 +8,11 @@ import HomeScreen from '../screens/HomeScreen';
 import NotesScreen from '../screens/NotesScreen';
 import NoteDetailScreen from '../screens/notes/NoteDetail';
 import QuotesScreen from '../screens/QuotesScreen';
-import WallpaperScreen from '../screens/WallpaperScreen';
 import NewsScreen from '../screens/NewsScreen';
 import DictionaryScreen from '../screens/DictionaryScreen';
 import MathGameScreen from '../screens/MathGameScreen';
+import CountriesScreen from '../screens/CountriesScreen';
+import CountryDetailScreen from '../screens/CountryDetailScreen';
 
 const Stack = createStackNavigator();
 
@@ -50,13 +51,15 @@ const AppNavigator = () => {
 
         <Stack.Screen name={MODULES.QUOTES} component={QuotesScreen} />
 
-        <Stack.Screen name={MODULES.WALLPAPER} component={WallpaperScreen} />
-
         <Stack.Screen name={MODULES.NEWS} component={NewsScreen} />
 
         <Stack.Screen name={MODULES.DICTIONARY} component={DictionaryScreen} />
 
         <Stack.Screen name={MODULES.MATH_GAME} component={MathGameScreen} />
+
+        <Stack.Screen name={MODULES.COUNTRIES} component={CountriesScreen} />
+
+        <Stack.Screen name="CountryDetail" component={CountryDetailScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

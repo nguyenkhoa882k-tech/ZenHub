@@ -21,10 +21,10 @@ const HomeScreen = () => {
   const headerOpacity = useRef(new Animated.Value(0)).current;
   const headerScale = useRef(new Animated.Value(0.8)).current;
   const scaleAnims = useRef(
-    [...Array(8)].map(() => new Animated.Value(0)),
+    [...Array(6)].map(() => new Animated.Value(0)),
   ).current;
   const rotateAnims = useRef(
-    [...Array(8)].map(() => new Animated.Value(0)),
+    [...Array(6)].map(() => new Animated.Value(0)),
   ).current;
 
   useEffect(() => {
@@ -104,14 +104,6 @@ const HomeScreen = () => {
       iconGradient: ['#4facfe', '#00f2fe'],
     },
     {
-      id: MODULES.WALLPAPER,
-      title: 'Hình Nền',
-      icon: 'image-outline',
-      description: 'Nền đẹp mắt',
-      bgColor: '#fa709a',
-      iconGradient: ['#fa709a', '#fee140'],
-    },
-    {
       id: MODULES.NEWS,
       title: 'Tin Tức',
       icon: 'newspaper-outline',
@@ -134,6 +126,14 @@ const HomeScreen = () => {
       description: 'Rèn luyện trí não',
       bgColor: '#a18cd1',
       iconGradient: ['#a18cd1', '#fbc2eb'],
+    },
+    {
+      id: MODULES.COUNTRIES,
+      title: 'Thế Giới Các Quốc Gia',
+      icon: 'earth-outline',
+      description: 'Khám phá thông tin toàn cầu',
+      bgColor: '#4ade80',
+      iconGradient: ['#4ade80', '#22d3ee'],
     },
   ];
 

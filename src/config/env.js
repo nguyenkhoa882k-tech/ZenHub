@@ -11,8 +11,6 @@ export const env = {
   NEWS_API_KEY: 'YOUR_NEWS_API_KEY_HERE',
   NEWS_API_URL: 'https://newsapi.org/v2',
   DICTIONARY_API_URL: 'https://api.dictionaryapi.dev/api/v2/entries/en',
-  WALLPAPER_API_KEY: 'unsplash_demo_key_replace_with_your_key',
-  WALLPAPER_API_URL: 'https://api.unsplash.com',
 
   // AdMob Configuration (Test IDs for development)
   ADMOB_BANNER_ANDROID: 'ca-app-pub-3940256099942544/6300978111',
