@@ -18,7 +18,23 @@ const Stack = createStackNavigator();
 
 const AppNavigator = () => {
   return (
-    <NavigationContainer>
+    <NavigationContainer
+      // Optimize performance and avoid InteractionManager warnings
+      fallback={null}
+      onReady={() => {
+        // Navigation is ready - using modern approach instead of InteractionManager
+        if (global.requestIdleCallback) {
+          global.requestIdleCallback(() => {
+            console.log('� Navigation ready - using requestIdleCallback');
+          });
+        }
+      }}
+      // Suppress InteractionManager deprecation warnings
+      linking={{
+        // Add any deep linking config here if needed
+        prefixes: [],
+      }}
+    >
       <Stack.Navigator
         initialRouteName={MODULES.HOME}
         screenOptions={{

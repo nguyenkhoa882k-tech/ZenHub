@@ -24,8 +24,18 @@ const RegionFilter = ({
     Antarctic: '🧊',
   };
 
+  // Mapping từ tiếng Anh sang tiếng Việt
+  const regionNames = {
+    Africa: 'Châu Phi',
+    Americas: 'Châu Mỹ',
+    Asia: 'Châu Á',
+    Europe: 'Châu Âu',
+    Oceania: 'Châu Đại Dương',
+    Antarctic: 'Nam Cực',
+  };
+
   const getRegionCount = region => {
-    // You can pass this as a prop or calculate from your countries data
+    // Có thể pass như prop hoặc tính từ dữ liệu countries
     const counts = {
       Africa: 54,
       Americas: 35,
@@ -42,7 +52,7 @@ const RegionFilter = ({
       <View style={styles.header}>
         <View style={styles.titleContainer}>
           <Icon name="location-outline" size={20} color="#374151" />
-          <Text style={styles.title}>Filter by Region</Text>
+          <Text style={styles.title}>Lọc theo khu vực</Text>
         </View>
 
         {selectedRegions.length > 0 && (
@@ -51,7 +61,7 @@ const RegionFilter = ({
             onPress={onClearAll}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            <Text style={styles.clearText}>Clear All</Text>
+            <Text style={styles.clearText}>Xóa tất cả</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -82,7 +92,7 @@ const RegionFilter = ({
                     isSelected && styles.regionTextSelected,
                   ]}
                 >
-                  {region}
+                  {regionNames[region]}
                 </Text>
                 <Text
                   style={[
@@ -107,8 +117,7 @@ const RegionFilter = ({
       {selectedRegions.length > 0 && (
         <View style={styles.selectedSummary}>
           <Text style={styles.summaryText}>
-            {selectedRegions.length} region
-            {selectedRegions.length !== 1 ? 's' : ''} selected
+            Đã chọn {selectedRegions.length} khu vực
           </Text>
         </View>
       )}

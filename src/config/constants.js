@@ -33,12 +33,12 @@ export const NEWS_CATEGORIES = [
 ];
 
 export const COUNTRY_REGIONS = [
-  'All',
   'Africa',
   'Americas',
   'Asia',
   'Europe',
   'Oceania',
+  'Antarctic',
 ];
 
 export const COUNTRY_SORT_OPTIONS = [

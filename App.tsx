@@ -6,6 +6,10 @@
 import React, { useEffect } from 'react';
 import { StatusBar } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+
+// Import polyfills first to handle deprecation warnings
+import './src/utils/polyfills';
+
 import AppNavigator from './src/navigation/AppNavigator';
 import notesService from './src/services/notes/notesService';
 import { initializeAds } from './src/services/adsService';
@@ -27,9 +31,9 @@ function App() {
 
   return (
     <SafeAreaProvider>
-      <StatusBar 
-        barStyle="dark-content" 
-        backgroundColor="transparent" 
+      <StatusBar
+        barStyle="dark-content"
+        backgroundColor="transparent"
         translucent={true}
       />
       <AppNavigator />

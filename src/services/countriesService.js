@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { STORAGE_KEYS } from '../config/constants';
+import { getVietnameseName, getVietnameseRegion } from '../config/countryNames';
 
 const BASE_URL = 'https://restcountries.com/v3.1';
 const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
@@ -130,19 +131,31 @@ const getCallingCode = idd => {
 const processCountry = country => {
   if (!country) return null;
 
+  const englishName = country.name?.common || 'Unknown';
+  const vietnameseName = getVietnameseName(englishName);
+  const englishRegion = country.region || 'Unknown';
+  const vietnameseRegion = getVietnameseRegion(englishRegion);
+
   return {
     cca3: country.cca3 || country.cca2,
     cca2: country.cca2,
     name: {
-      common: country.name?.common || 'Unknown',
-      official: country.name?.official || country.name?.common || 'Unknown',
+      common: vietnameseName, // ✅ Tên tiếng Việt
+      official: getVietnameseName(
+        country.name?.official || country.name?.common || 'Unknown',
+      ),
+      english: {
+        common: englishName, // ✅ Giữ tên tiếng Anh cho tìm kiếm
+        official: country.name?.official || country.name?.common || 'Unknown',
+      },
     },
     capital: Array.isArray(country.capital)
       ? country.capital
       : country.capital
       ? [country.capital]
       : [],
-    region: country.region || 'Unknown',
+    region: vietnameseRegion, // ✅ Khu vực tiếng Việt
+    regionEnglish: englishRegion, // ✅ Giữ khu vực tiếng Anh
     subregion: country.subregion || 'Unknown',
     population: country.population || 0,
     area: country.area || 0,
@@ -152,13 +165,35 @@ const processCountry = country => {
     currencies: country.currencies || {},
     timezones: country.timezones || [],
     borders: country.borders || [],
-    latlng: country.latlng || [0, 0],
+    latlng:
+      Array.isArray(country.latlng) && country.latlng.length >= 2
+        ? country.latlng
+        : [0, 0], // Better validation for coordinates
     tld: country.tld || [],
     callingCode: getCallingCode(country.idd),
     car: country.car || { side: 'right' },
     independent: country.independent || false,
     unMember: country.unMember || false,
     status: country.status || 'Unknown',
+    // ✅ Thêm thông tin bổ sung từ REST Countries API v3.1
+    demonyms: country.demonyms || {},
+    altSpellings: country.altSpellings || [],
+    landlocked: country.landlocked || false,
+    ccn3: country.ccn3 || null,
+    cioc: country.cioc || null, // Olympic Committee code
+    fifa: country.fifa || null, // FIFA code
+    startOfWeek: country.startOfWeek || 'monday',
+    postalCode: country.postalCode || null,
+    gini: country.gini || null, // Gini inequality index
+    continents: country.continents || [],
+    translations: country.translations || {},
+    nativeName: country.name?.nativeName || {},
+    capitalInfo: country.capitalInfo || {},
+    coatOfArms: {
+      png: country.coatOfArms?.png || '',
+      svg: country.coatOfArms?.svg || '',
+    },
+    flagEmoji: country.flag || '',
     maps: {
       googleMaps: country.maps?.googleMaps || '',
       openStreetMaps: country.maps?.openStreetMaps || '',
@@ -189,20 +224,78 @@ const getAllCountries = async (forceRefresh = false) => {
       }
     }
 
-    // Fetch from API - use simple field list or no fields
+    // Fetch from API - get ALL available fields for rich detail
+    console.log('🌍 Fetching all countries with full data...');
     let countries;
     try {
-      // Try with basic fields first
-      countries = await makeApiCall(
-        '/all?fields=name,capital,region,population,area,flags,cca3',
+      // Get all available fields from the API
+      // Note: REST Countries API requires fields parameter for /all endpoint
+      const allFields = [
+        'name',
+        'capital',
+        'region',
+        'subregion',
+        'population',
+        'area',
+        'flags',
+        'cca2',
+        'cca3',
+        'ccn3',
+        'cioc',
+        'fifa',
+        'languages',
+        'currencies',
+        'timezones',
+        'borders',
+        'latlng',
+        'tld',
+        'idd',
+        'car',
+        'independent',
+        'unMember',
+        'status',
+        'demonyms',
+        'altSpellings',
+        'landlocked',
+        'startOfWeek',
+        'postalCode',
+        'gini',
+        'continents',
+        'translations',
+        'maps',
+        'coatOfArms',
+        'capitalInfo',
+        'flag',
+      ].join(',');
+
+      countries = await makeApiCall(`/all?fields=${allFields}`);
+      console.log(
+        `✅ Successfully fetched ${countries.length} countries with full data`,
       );
+
+      // Log sample of fields available
+      if (countries.length > 0) {
+        const sampleCountry = countries[0];
+        console.log(
+          '📊 Sample country fields available:',
+          Object.keys(sampleCountry),
+        );
+      }
     } catch (error) {
-      console.warn(
-        'Failed with fields parameter, trying without fields:',
-        error,
-      );
-      // Fallback to all data if fields parameter fails
-      countries = await makeApiCall('/all');
+      console.warn('⚠️ Failed to fetch full data, trying basic fields:', error);
+
+      // Fallback to essential fields if full request fails
+      try {
+        const basicFields =
+          'name,capital,region,population,area,flags,cca3,latlng,currencies,languages';
+        countries = await makeApiCall(`/all?fields=${basicFields}`);
+        console.log(
+          `📦 Using basic fields fallback, got ${countries.length} countries`,
+        );
+      } catch (fallbackError) {
+        console.error('❌ Even basic fields failed:', fallbackError);
+        throw fallbackError;
+      }
     }
 
     // Cache the data
@@ -210,11 +303,12 @@ const getAllCountries = async (forceRefresh = false) => {
 
     return processCountries(countries);
   } catch (error) {
-    console.error('Error fetching all countries:', error);
+    console.error('❌ Error fetching all countries:', error);
 
     // Return cached data even if expired in case of error
     const cachedCountries = await getCachedData('all');
     if (cachedCountries) {
+      console.log('📦 Using cached data due to API error');
       return processCountries(cachedCountries);
     }
 
@@ -268,26 +362,62 @@ const searchCountries = (allCountries, query) => {
   });
 };
 
-// Get country by code
+// Get country by code with FULL details
 const getCountryByCode = async code => {
   try {
     await initialize();
 
     const cacheKey = `country_${code}`;
-    const cachedData = await getCachedData(cacheKey);
-    if (cachedData) {
-      return processCountry(cachedData[0]);
-    }
 
-    const countries = await makeApiCall(
-      `/alpha/${code}?fields=name,capital,region,subregion,population,area,flags,cca2,cca3,languages,currencies,timezones,borders,car,latlng,tld,idd,independent,unMember,status`,
+    // Always force refresh for debugging - remove cache temporarily
+    // const cachedData = await getCachedData(cacheKey);
+    // if (cachedData) {
+    //   return processCountry(cachedData[0]);
+    // }
+
+    // Get ALL available fields from the API for maximum detail
+    console.log(`🔍 Fetching fresh data for country: ${code}`);
+    const countries = await makeApiCall(`/alpha/${code}`);
+
+    console.log(
+      `📊 Raw API response for ${code}:`,
+      JSON.stringify(countries, null, 2),
     );
 
     await setCachedData(cacheKey, countries);
-    return processCountry(Array.isArray(countries) ? countries[0] : countries);
+    const processedCountry = processCountry(
+      Array.isArray(countries) ? countries[0] : countries,
+    );
+
+    console.log(`✅ Processed country data:`, processedCountry);
+    return processedCountry;
   } catch (error) {
     console.error(`Error fetching country by code ${code}:`, error);
     throw new Error(`Failed to fetch country with code ${code}`);
+  }
+};
+
+// Clear all cached data - useful for debugging
+const clearAllCache = async () => {
+  try {
+    console.log('🧹 Clearing all cached data...');
+
+    // Clear all countries cache
+    await AsyncStorage.removeItem(`${STORAGE_KEYS.COUNTRIES_CACHE}_all`);
+
+    // Clear region caches
+    const regions = ['Africa', 'Americas', 'Asia', 'Europe', 'Oceania'];
+    for (const region of regions) {
+      await AsyncStorage.removeItem(
+        `${STORAGE_KEYS.COUNTRIES_CACHE}_region_${region}`,
+      );
+    }
+
+    // Clear individual country caches - note: this is simplified,
+    // in production you might want to get all cache keys first
+    console.log('✅ Cache cleared successfully');
+  } catch (error) {
+    console.error('❌ Error clearing cache:', error);
   }
 };
 
@@ -322,7 +452,22 @@ const toggleFavorite = async countryCode => {
   }
 
   await saveFavorites();
-  return { isFavorite: favorites.has(countryCode) };
+
+  // Return complete country data with updated favorite status
+  try {
+    const countries = await getAllCountries();
+    const country = countries.find(c => c.cca3 === countryCode);
+    if (country) {
+      return {
+        ...country,
+        isFavorite: favorites.has(countryCode),
+      };
+    }
+    return { isFavorite: favorites.has(countryCode) };
+  } catch (error) {
+    console.error('Error getting country data for toggle:', error);
+    return { isFavorite: favorites.has(countryCode) };
+  }
 };
 
 const isFavorite = countryCode => {
@@ -433,6 +578,7 @@ export default {
   getRegionStats,
   sortCountries,
   clearCache,
+  clearAllCache, // ✅ Thêm hàm clear cache mới
   processCountries,
   processCountry,
 };

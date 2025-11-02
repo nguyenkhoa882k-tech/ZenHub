@@ -50,12 +50,12 @@ const SearchBar = ({
 
   const borderColor = animatedValue.interpolate({
     inputRange: [0, 1],
-    outputRange: ['#E5E7EB', '#4F46E5'],
+    outputRange: ['#E5E7EB', '#6366F1'],
   });
 
   const iconColor = animatedValue.interpolate({
     inputRange: [0, 1],
-    outputRange: ['#9CA3AF', '#4F46E5'],
+    outputRange: ['#9CA3AF', '#6366F1'],
   });
 
   return (
@@ -72,7 +72,7 @@ const SearchBar = ({
           <Icon
             name="search-outline"
             size={20}
-            color={isFocused ? '#4F46E5' : '#9CA3AF'}
+            color={isFocused ? '#6366F1' : '#9CA3AF'}
           />
         </Animated.View>
 
@@ -122,38 +122,41 @@ const SearchBar = ({
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 16,
+    marginBottom: 0, // Remove bottom margin since it's in a wrapper now
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    borderWidth: 2,
-    paddingHorizontal: 16,
-    paddingVertical: 4,
+    backgroundColor: '#F8F9FA',
+    borderRadius: 16,
+    borderWidth: 1.5,
+    paddingHorizontal: 18,
+    paddingVertical: 2,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 1,
     },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOpacity: 0.03,
+    shadowRadius: 3,
+    elevation: 1,
   },
   iconContainer: {
-    marginRight: 12,
+    marginRight: 14,
   },
   textInput: {
     flex: 1,
-    fontSize: 16,
+    fontSize: 15,
     color: '#1F2937',
-    paddingVertical: 12,
+    paddingVertical: 14,
     paddingHorizontal: 0,
+    fontWeight: '400',
   },
   clearButton: {
     marginLeft: 8,
-    padding: 4,
+    padding: 6,
+    borderRadius: 12,
+    backgroundColor: '#E5E7EB',
   },
   filterButton: {
     marginLeft: 8,

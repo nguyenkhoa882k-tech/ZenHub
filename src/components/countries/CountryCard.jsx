@@ -10,7 +10,7 @@ import {
 import Icon from '@react-native-vector-icons/ionicons';
 
 const { width } = Dimensions.get('window');
-const CARD_WIDTH = (width - 48) / 2;
+const CARD_WIDTH = (width - 56) / 2; // Increased space for better margins
 
 const CountryCard = ({
   country,
@@ -19,6 +19,11 @@ const CountryCard = ({
   viewMode = 'grid', // 'grid' | 'list'
   style,
 }) => {
+  // Safety check: return null if country data is invalid
+  if (!country || typeof country !== 'object') {
+    return null;
+  }
+
   const formatPopulation = population => {
     if (!population || population === 0) return 'N/A';
     if (population >= 1000000000) {
@@ -50,17 +55,30 @@ const CountryCard = ({
       >
         <View style={styles.listContent}>
           <View style={styles.listFlag}>
-            <Image
-              source={{ uri: country.flag }}
-              style={styles.listFlagImage}
-              resizeMode="cover"
-            />
+            {country.flag || country.flags?.png || country.flags?.svg ? (
+              <Image
+                source={{
+                  uri: country.flag || country.flags?.png || country.flags?.svg,
+                }}
+                style={styles.listFlagImage}
+                resizeMode="cover"
+                onError={() =>
+                  console.log('Error loading flag for', country.name?.common)
+                }
+              />
+            ) : (
+              <View style={[styles.listFlagImage, styles.flagPlaceholder]}>
+                <Text style={styles.flagText}>🏳️</Text>
+              </View>
+            )}
           </View>
 
           <View style={styles.listInfo}>
             <View style={styles.listHeader}>
               <Text style={styles.listName} numberOfLines={1}>
-                {country.name.common}
+                {country.name?.common ||
+                  country.name?.official ||
+                  'Unknown Country'}
               </Text>
               <TouchableOpacity
                 style={styles.favoriteButton}
@@ -77,15 +95,17 @@ const CountryCard = ({
             <Text style={styles.listCapital} numberOfLines={1}>
               📍{' '}
               {Array.isArray(country.capital)
-                ? country.capital[0]
-                : country.capital}
+                ? country.capital[0] || 'N/A'
+                : country.capital || 'N/A'}
             </Text>
 
             <View style={styles.listStats}>
               <Text style={styles.listStat}>
                 👥 {formatPopulation(country.population)}
               </Text>
-              <Text style={styles.listStat}>🌍 {country.region}</Text>
+              <Text style={styles.listStat}>
+                🌍 {country.region || 'Unknown'}
+              </Text>
             </View>
           </View>
         </View>
@@ -101,11 +121,22 @@ const CountryCard = ({
     >
       <View style={styles.cardHeader}>
         <View style={styles.flagContainer}>
-          <Image
-            source={{ uri: country.flag }}
-            style={styles.flagImage}
-            resizeMode="cover"
-          />
+          {country.flag || country.flags?.png || country.flags?.svg ? (
+            <Image
+              source={{
+                uri: country.flag || country.flags?.png || country.flags?.svg,
+              }}
+              style={styles.flagImage}
+              resizeMode="cover"
+              onError={() =>
+                console.log('Error loading flag for', country.name?.common)
+              }
+            />
+          ) : (
+            <View style={[styles.flagImage, styles.flagPlaceholder]}>
+              <Text style={styles.flagText}>🏳️</Text>
+            </View>
+          )}
         </View>
         <TouchableOpacity
           style={styles.favoriteButton}
@@ -121,14 +152,14 @@ const CountryCard = ({
 
       <View style={styles.cardContent}>
         <Text style={styles.countryName} numberOfLines={2}>
-          {country.name.common}
+          {country.name?.common || country.name?.official || 'Unknown Country'}
         </Text>
 
         <Text style={styles.capital} numberOfLines={1}>
           📍{' '}
           {Array.isArray(country.capital)
-            ? country.capital[0]
-            : country.capital}
+            ? country.capital[0] || 'N/A'
+            : country.capital || 'N/A'}
         </Text>
 
         <View style={styles.statsContainer}>
@@ -136,19 +167,19 @@ const CountryCard = ({
             <Text style={styles.statValue}>
               {formatPopulation(country.population)}
             </Text>
-            <Text style={styles.statLabel}>Population</Text>
+            <Text style={styles.statLabel}>Dân số</Text>
           </View>
 
           <View style={styles.statDivider} />
 
           <View style={styles.statItem}>
             <Text style={styles.statValue}>{formatArea(country.area)}</Text>
-            <Text style={styles.statLabel}>Area</Text>
+            <Text style={styles.statLabel}>Diện tích</Text>
           </View>
         </View>
 
         <View style={styles.regionBadge}>
-          <Text style={styles.regionText}>{country.region}</Text>
+          <Text style={styles.regionText}>{country.region || 'Unknown'}</Text>
         </View>
       </View>
     </TouchableOpacity>
@@ -162,6 +193,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
     marginBottom: 16,
+    marginHorizontal: 4,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -333,6 +365,14 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#9CA3AF',
     fontWeight: '500',
+  },
+  flagPlaceholder: {
+    backgroundColor: '#F3F4F6',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  flagText: {
+    fontSize: 20,
   },
 });
 
